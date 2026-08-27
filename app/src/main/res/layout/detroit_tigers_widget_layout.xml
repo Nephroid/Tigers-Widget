@@ -226,7 +226,7 @@
                 android:id="@+id/widget_team_6"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="WCGB: 6.0, GL: 62"
+                android:text="WCGB: 6.0"
                 android:textColor="#FF5252"
                 android:textSize="9sp"
                 android:textStyle="bold|italic"

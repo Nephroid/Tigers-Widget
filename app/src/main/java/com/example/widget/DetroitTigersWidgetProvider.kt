@@ -350,13 +350,6 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         val playoffStatusRaw = prefs.getString("playoff_status", "OUT") ?: "OUT"
         val playoffSpotInfo = prefs.getString("playoff_spot_info", null)
 
-        val detTeam = sortedList.firstOrNull { it.name.contains("DET", ignoreCase = true) }
-        val glCalculated = if (detTeam != null && detTeam.wins + detTeam.losses > 0) {
-            maxOf(0, 162 - (detTeam.wins + detTeam.losses))
-        } else {
-            prefs.getInt("tigers_games_left", 29)
-        }
-
         val isPlayoffIn = playoffStatusRaw.contains("IN", ignoreCase = true) ||
                 wcGbRaw.contains("IN", ignoreCase = true) ||
                 (sortedList.indexOfFirst { it.name.contains("DET", ignoreCase = true) } == 0)
@@ -365,18 +358,18 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
             isPlayoffIn -> {
                 if (playoffSpotInfo != null && playoffSpotInfo.contains("WC", ignoreCase = true)) {
                     val spot = if (playoffSpotInfo.contains("WC #1")) "WC1" else if (playoffSpotInfo.contains("WC #2")) "WC2" else "WC3"
-                    "PLAYOFF: IN ($spot) • GL: $glCalculated"
+                    "PLAYOFF: IN ($spot)"
                 } else if (sortedList.indexOfFirst { it.name.contains("DET", ignoreCase = true) } == 0) {
-                    "PLAYOFF: IN (ALC #1) • GL: $glCalculated"
+                    "PLAYOFF: IN (ALC #1)"
                 } else {
-                    "PLAYOFF: IN • GL: $glCalculated"
+                    "PLAYOFF: IN"
                 }
             }
             else -> {
                 val cleanGb = wcGbRaw.replace(Regex("^WCGB:?\\s*", RegexOption.IGNORE_CASE), "")
                     .replace(Regex("^WC:?\\s*", RegexOption.IGNORE_CASE), "")
                     .replace("GB", "").trim()
-                "WCGB: $cleanGb • GL: $glCalculated"
+                "WCGB: $cleanGb"
             }
         }
 
