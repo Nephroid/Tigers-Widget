@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="8dp">
+
+    <!-- Header Row (Centered) -->
+    <LinearLayout
+        android:id="@+id/widget_header_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="3dp">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TIGERS COUNTDOWN"
+            android:textColor="#FA4616"
+            android:textSize="11.5sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04"
+            android:layout_marginRight="6dp" />
+
+        <TextView
+            android:id="@+id/widget_tag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#1B365D"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp"
+            android:text="NEXT GAME"
+            android:textColor="#FFFFFF"
+            android:textSize="9sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/widget_divider_top"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1B365D"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Matchup Section with Logos (Centered) -->
+    <LinearLayout
+        android:id="@+id/widget_matchup_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="4dp">
+
+        <!-- Detroit Tigers Logo -->
+        <ImageView
+            android:id="@+id/widget_tigers_logo"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginRight="6dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_tigers_logo" />
+
+        <!-- Middle Info (Centered Content) -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_weight="0">
+
+            <!-- Opponent -->
+            <TextView
+                android:id="@+id/widget_opponent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="vs. Guardians"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:maxLines="1" />
+
+            <!-- Countdown Timer -->
+            <TextView
+                android:id="@+id/widget_countdown"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="02h 45m"
+                android:textColor="#FA4616"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:maxLines="1" />
+        </LinearLayout>
+
+        <!-- Opponent Logo -->
+        <ImageView
+            android:id="@+id/widget_opponent_logo"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginLeft="6dp"
+            android:scaleType="fitCenter"
+            android:src="@android:drawable/ic_menu_gallery" />
+    </LinearLayout>
+
+    <!-- Pitcher Last Game Info (Centered) -->
+    <TextView
+        android:id="@+id/widget_stadium_pitcher_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="*Starting Pitcher: Tarik Skubal (L)\n(Last Game: 7.0 IP, 9 SO)"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:maxLines="2"
+        android:layout_marginBottom="3dp" />
+
+    <!-- Tigers Standing & head-to-head info (Centered) -->
+    <TextView
+        android:id="@+id/widget_standing_h2h"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="2nd in AL Central • 5th in AL • Record: 4-3 vs CLE"
+        android:textColor="#FFC107"
+        android:textSize="9.5sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:maxLines="1"
+        android:layout_marginBottom="3dp" />
+
+    <!-- AL Central Standings Layout: 3 columns (1,2 in col 1; 3,4 in col 2; 5 in col 3) -->
+    <LinearLayout
+        android:id="@+id/widget_standings_table"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="1dp"
+        android:paddingRight="1dp"
+        android:layout_marginBottom="0dp">
+
+        <!-- Column 1: Teams 1 & 2 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/widget_team_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="1. CLE: 58-37"
+                android:textColor="#D0D8E4"
+                android:textSize="9.5sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:maxLines="1"
+                android:paddingBottom="1dp" />
+            <TextView
+                android:id="@+id/widget_team_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="2. MIN: 53-41"
+                android:textColor="#D0D8E4"
+                android:textSize="9.5sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:maxLines="1" />
+        </LinearLayout>
+
+        <!-- Column 2: Teams 3 & 4 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/widget_team_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="3. KC: 52-43"
+                android:textColor="#D0D8E4"
+                android:textSize="9.5sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:maxLines="1"
+                android:paddingBottom="1dp" />
+            <TextView
+                android:id="@+id/widget_team_4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="4. DET: 47-53"
+                android:textColor="#FFC107"
+                android:textSize="9.5sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:maxLines="1" />
+        </LinearLayout>
+
+        <!-- Column 3: Team 5 & WCGB -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/widget_team_5"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="5. CWS: 27-68"
+                android:textColor="#D0D8E4"
+                android:textSize="9.5sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:maxLines="1"
+                android:paddingBottom="1dp" />
+            <TextView
+                android:id="@+id/widget_team_6"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="WCGB: 6.0, GL: 62"
+                android:textColor="#FF5252"
+                android:textSize="9sp"
+                android:textStyle="bold|italic"
+                android:gravity="center"
+                android:maxLines="1" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>
