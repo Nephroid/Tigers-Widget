@@ -43,35 +43,51 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Verify APK Generated
+      - name: Extract Version & Package Versioned APK
+        id: version_step
         run: |
+          VERSION=$(grep "VERSION_MAJOR" version.properties | cut -d'=' -f2).$(grep "VERSION_MINOR" version.properties | cut -d'=' -f2).$(grep "VERSION_PATCH" version.properties | cut -d'=' -f2)
+          BUILD=$(grep "VERSION_BUILD" version.properties | cut -d'=' -f2)
+          if [ "$BUILD" -gt "0" ]; then
+            FULL_VERSION="${VERSION}.${BUILD}"
+          else
+            FULL_VERSION="${VERSION}"
+          fi
+          echo "APP_VERSION=${FULL_VERSION}" >> $GITHUB_OUTPUT
+          echo "Building for version: ${FULL_VERSION}"
+          
           ls -la app/build/outputs/apk/debug/
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Tigers-Widget-v${FULL_VERSION}.apk
           cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Tigers-Widget.apk
 
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Tigers-Widget-APK
-          path: app/build/outputs/apk/debug/Tigers-Widget.apk
+          name: Tigers-Widget-v${{ steps.version_step.outputs.APP_VERSION }}-APK
+          path: |
+            app/build/outputs/apk/debug/Tigers-Widget-v${{ steps.version_step.outputs.APP_VERSION }}.apk
+            app/build/outputs/apk/debug/Tigers-Widget.apk
           if-no-files-found: error
 
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: latest
-          name: Detroit Tigers Widget APK (Latest Build)
+          tag_name: v${{ steps.version_step.outputs.APP_VERSION }}
+          name: Detroit Tigers Widget v${{ steps.version_step.outputs.APP_VERSION }}
           body: |
-            ## ⚾ Detroit Tigers Android App & Home Screen Widget
+            ## ⚾ Detroit Tigers Android App & Home Screen Widget (v${{ steps.version_step.outputs.APP_VERSION }})
             
             This release contains the latest automated `.apk` build for direct installation on Android devices.
             
             ### 📥 Download & Installation:
-            1. Download `Tigers-Widget.apk` below directly to your Android device.
+            1. Download `Tigers-Widget-v${{ steps.version_step.outputs.APP_VERSION }}.apk` (or `Tigers-Widget.apk`) below directly to your Android device.
             2. Open the file on your device to install (enable *Install from Unknown Sources* if prompted).
             3. Long-press on your home screen to add the **Tigers Countdown Widget**!
           draft: false
           prerelease: false
-          files: app/build/outputs/apk/debug/Tigers-Widget.apk
+          files: |
+            app/build/outputs/apk/debug/Tigers-Widget-v${{ steps.version_step.outputs.APP_VERSION }}.apk
+            app/build/outputs/apk/debug/Tigers-Widget.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

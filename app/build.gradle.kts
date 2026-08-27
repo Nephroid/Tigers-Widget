@@ -1,4 +1,7 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.Properties
 
 plugins {
   alias(libs.plugins.android.application)
@@ -9,6 +12,26 @@ plugins {
   alias(libs.plugins.google.services)
 }
 
+val versionPropsFile = rootProject.file("version.properties")
+val versionProps = Properties().apply {
+    if (versionPropsFile.exists()) {
+        FileInputStream(versionPropsFile).use { load(it) }
+    } else {
+        setProperty("VERSION_MAJOR", "0")
+        setProperty("VERSION_MINOR", "8")
+        setProperty("VERSION_PATCH", "27")
+        setProperty("VERSION_BUILD", "0")
+    }
+}
+
+val vMajor = (versionProps.getProperty("VERSION_MAJOR") ?: "0").toInt()
+val vMinor = (versionProps.getProperty("VERSION_MINOR") ?: "8").toInt()
+val vPatch = (versionProps.getProperty("VERSION_PATCH") ?: "27").toInt()
+val vBuild = (versionProps.getProperty("VERSION_BUILD") ?: "0").toInt()
+
+val appVersionCode = vMajor * 1000000 + vMinor * 10000 + vPatch * 100 + vBuild
+val appVersionName = if (vBuild > 0) "$vMajor.$vMinor.$vPatch.$vBuild" else "$vMajor.$vMinor.$vPatch"
+
 android {
   namespace = "com.example"
   compileSdk = 35
@@ -17,8 +40,8 @@ android {
     applicationId = "com.aistudio.tigerswidget.kyvazm"
     minSdk = 24
     targetSdk = 35
-    versionCode = 1
-    versionName = "1.0"
+    versionCode = appVersionCode
+    versionName = appVersionName
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -33,6 +56,7 @@ android {
       isDebuggable = true
     }
   }
+
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
@@ -42,6 +66,71 @@ android {
     buildConfig = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
+}
+
+tasks.register("packageVersionedApk") {
+  description = "Packages and copies versioned APKs to build/outputs/apk/versioned/"
+  dependsOn("assembleDebug")
+  val vName = appVersionName
+  val debugDir = layout.buildDirectory.dir("outputs/apk/debug")
+  val versionedDir = layout.buildDirectory.dir("outputs/apk/versioned")
+  doLast {
+    val src = debugDir.get().file("app-debug.apk").asFile
+    val destDir = versionedDir.get().asFile
+    if (!destDir.exists()) destDir.mkdirs()
+    if (src.exists()) {
+      val dest = File(destDir, "Tigers-Widget-v${vName}.apk")
+      src.copyTo(dest, overwrite = true)
+      println("Created versioned APK: ${dest.absolutePath}")
+    }
+  }
+}
+
+tasks.register("printVersion") {
+  val vName = appVersionName
+  val vCode = appVersionCode
+  doLast {
+    println("Version Name: $vName")
+    println("Version Code: $vCode")
+  }
+}
+
+tasks.register("bumpVersion") {
+  description = "Bumps the build number (e.g. 0.8.27 -> 0.8.27.1) in version.properties"
+  val file = versionPropsFile
+  doLast {
+    val props = Properties()
+    if (file.exists()) {
+      FileInputStream(file).use { props.load(it) }
+    }
+    val major = (props.getProperty("VERSION_MAJOR") ?: "0").toInt()
+    val minor = (props.getProperty("VERSION_MINOR") ?: "8").toInt()
+    val patch = (props.getProperty("VERSION_PATCH") ?: "27").toInt()
+    val currentBuild = (props.getProperty("VERSION_BUILD") ?: "0").toInt()
+    val nextBuild = currentBuild + 1
+    props.setProperty("VERSION_BUILD", nextBuild.toString())
+    FileOutputStream(file).use { props.store(it, "Detroit Tigers Widget Version") }
+    println("Updated version: $major.$minor.$patch.$nextBuild")
+  }
+}
+
+tasks.register("bumpPatch") {
+  description = "Bumps the patch version (e.g. 0.8.27 -> 0.8.28) in version.properties"
+  val file = versionPropsFile
+  doLast {
+    val props = Properties()
+    if (file.exists()) {
+      FileInputStream(file).use { props.load(it) }
+    }
+    val major = (props.getProperty("VERSION_MAJOR") ?: "0").toInt()
+    val minor = (props.getProperty("VERSION_MINOR") ?: "8").toInt()
+    val currentPatch = (props.getProperty("VERSION_PATCH") ?: "27").toInt()
+    val nextPatch = currentPatch + 1
+    props.setProperty("VERSION_PATCH", nextPatch.toString())
+    props.setProperty("VERSION_BUILD", "0")
+    FileOutputStream(file).use { props.store(it, "Detroit Tigers Widget Version") }
+    println("Updated version: $major.$minor.$nextPatch")
+  }
 }
 
 // Configure the Secrets Gradle Plugin to use .env and .env.example files

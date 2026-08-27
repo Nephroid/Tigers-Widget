@@ -170,6 +170,24 @@ fun GameDashboard(
                     }
                 }
 
+                // App Version Footer
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Detroit Tigers Widget • v${com.example.BuildConfig.VERSION_NAME}",
+                        style = TextStyle(
+                            color = Color.White.copy(alpha = 0.35f),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 0.5.sp
+                        )
+                    )
+                }
+
                 // Space for FloatingActionButton clearance
                 Spacer(modifier = Modifier.height(72.dp))
             }
