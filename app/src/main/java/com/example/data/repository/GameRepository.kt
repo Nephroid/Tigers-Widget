@@ -502,6 +502,7 @@ class GameRepository(private val gameDao: GameDao) {
     private fun getTeamAbbreviation(opponentName: String): String {
         val name = opponentName.lowercase()
         return when {
+            name.contains("dodgers") || name.contains("lad") || name.contains("la dodgers") -> "LAD"
             name.contains("guardians") || name.contains("cleveland") -> "CLE"
             name.contains("twins") || name.contains("minnesota") -> "MIN"
             name.contains("white sox") || name.contains("chicago white sox") -> "CWS"
