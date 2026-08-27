@@ -87,10 +87,16 @@ data class MlbStatSplit(
 data class MlbPitchingStats(
     val wins: Int?,
     val losses: Int?,
-    val era: Double?, // We will tolerate Double or String in custom converters, or convert manually
+    val era: String?,
     val strikeOuts: Int?,
-    val whip: Double?
-)
+    val whip: String?
+) {
+    val eraDouble: Double
+        get() = era?.toDoubleOrNull() ?: 0.0
+
+    val whipDouble: Double
+        get() = whip?.toDoubleOrNull() ?: 0.0
+}
 
 @JsonClass(generateAdapter = true)
 data class MlbStandingsResponse(

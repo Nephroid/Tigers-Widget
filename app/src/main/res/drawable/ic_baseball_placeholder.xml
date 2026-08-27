@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Outer Baseball Circle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,2A22,22 0 1,0 46,24,22,22 0 0,0 24,2Z" />
+    <!-- Left Stitches Arc -->
+    <path
+        android:strokeColor="#FA4616"
+        android:strokeWidth="1.8"
+        android:pathData="M16,6 A18,18 0 0,0 16,42" />
+    <!-- Right Stitches Arc -->
+    <path
+        android:strokeColor="#FA4616"
+        android:strokeWidth="1.8"
+        android:pathData="M32,6 A18,18 0 0,1 32,42" />
+    <!-- Left Stitch Marks -->
+    <path
+        android:strokeColor="#FA4616"
+        android:strokeWidth="1.5"
+        android:pathData="M13,12 L17,14 M11,19 L15,20 M11,28 L15,27 M13,35 L17,33" />
+    <!-- Right Stitch Marks -->
+    <path
+        android:strokeColor="#FA4616"
+        android:strokeWidth="1.5"
+        android:pathData="M35,12 L31,14 M37,19 L33,20 M37,28 L33,27 M35,35 L31,33" />
+</vector>

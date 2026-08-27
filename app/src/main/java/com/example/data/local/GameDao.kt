@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface GameDao {
-    @Query("SELECT * FROM upcoming_games ORDER BY gameTimeMillis ASC LIMIT 2")
+    @Query("SELECT * FROM upcoming_games ORDER BY gameTimeMillis ASC LIMIT 7")
     fun getUpcomingGames(): Flow<List<UpcomingGame>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

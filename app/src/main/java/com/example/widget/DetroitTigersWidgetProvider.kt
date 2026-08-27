@@ -46,7 +46,14 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         Log.d("TigersWidget", "onUpdate triggered for widgets")
-        updateAllWidgets(context, appWidgetManager, appWidgetIds)
+        val pendingResult = goAsync()
+        widgetScope.launch {
+            try {
+                updateAllWidgets(context, appWidgetManager, appWidgetIds)
+            } finally {
+                pendingResult.finish()
+            }
+        }
         scheduleNextUpdate(context)
     }
 
@@ -58,7 +65,14 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
     ) {
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
         Log.d("TigersWidget", "onAppWidgetOptionsChanged triggered")
-        updateAllWidgets(context, appWidgetManager, intArrayOf(appWidgetId))
+        val pendingResult = goAsync()
+        widgetScope.launch {
+            try {
+                updateAllWidgets(context, appWidgetManager, intArrayOf(appWidgetId))
+            } finally {
+                pendingResult.finish()
+            }
+        }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -71,66 +85,79 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val componentName = ComponentName(context, DetroitTigersWidgetProvider::class.java)
             val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
-            updateAllWidgets(context, appWidgetManager, appWidgetIds)
+            if (appWidgetIds.isNotEmpty()) {
+                val pendingResult = goAsync()
+                widgetScope.launch {
+                    try {
+                        updateAllWidgets(context, appWidgetManager, appWidgetIds)
+                    } finally {
+                        pendingResult.finish()
+                    }
+                }
+            }
             scheduleNextUpdate(context)
         }
     }
 
-    private fun updateAllWidgets(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        widgetScope.launch {
-            try {
-                val db = AppDatabase.getDatabase(context)
-                
-                // Refresh live data from repository in background
+    private suspend fun updateAllWidgets(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        try {
+            val db = AppDatabase.getDatabase(context)
+            
+            // Check if games need background refreshing (throttle to at most every 15 mins)
+            val prefs = context.getSharedPreferences("TigersWidgetPrefs", Context.MODE_PRIVATE)
+            val lastRefresh = prefs.getLong("last_widget_refresh_ts", 0L)
+            val now = System.currentTimeMillis()
+            if (now - lastRefresh > 15 * 60 * 1000L) {
                 try {
                     val repository = com.example.data.repository.GameRepository(db.gameDao())
                     repository.refreshGames(context, forceSimulated = false)
+                    prefs.edit().putLong("last_widget_refresh_ts", now).apply()
                 } catch (e: Exception) {
                     Log.e("TigersWidget", "Error refreshing games repository in widget: ${e.message}")
                 }
-
-                var games = db.gameDao().getUpcomingGames().firstOrNull() ?: emptyList()
-                val nextGame = games.firstOrNull()
-
-                appWidgetIds.forEach { widgetId ->
-                    val views = RemoteViews(context.packageName, R.layout.detroit_tigers_widget_layout)
-                    
-                    if (nextGame != null) {
-                        bindGameData(context, views, nextGame)
-                    } else {
-                        bindEmptyState(context, views)
-                    }
-
-                    // Query current widget options for responsive sizing
-                    val options = appWidgetManager.getAppWidgetOptions(widgetId)
-                    val minWidth = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) ?: 180
-                    val minHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) ?: 110
-                    applyResponsiveLayout(views, minWidth, minHeight)
-
-                    // Click pending intent to open main app
-                    val clickIntent = Intent(context, MainActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    }
-                    
-                    val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    } else {
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                    }
-
-                    val pendingIntent = PendingIntent.getActivity(
-                        context,
-                        0,
-                        clickIntent,
-                        pendingIntentFlags
-                    )
-
-                    views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
-                    appWidgetManager.updateAppWidget(widgetId, views)
-                }
-            } catch (e: Exception) {
-                Log.e("TigersWidget", "Error updating widget remote views: ${e.message}", e)
             }
+
+            val games = db.gameDao().getUpcomingGames().firstOrNull() ?: emptyList()
+            val nextGame = games.firstOrNull()
+
+            appWidgetIds.forEach { widgetId ->
+                val views = RemoteViews(context.packageName, R.layout.detroit_tigers_widget_layout)
+                
+                if (nextGame != null) {
+                    bindGameData(context, views, nextGame)
+                } else {
+                    bindEmptyState(context, views)
+                }
+
+                // Query current widget options for responsive sizing
+                val options = appWidgetManager.getAppWidgetOptions(widgetId)
+                val minWidth = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) ?: 180
+                val minHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) ?: 110
+                applyResponsiveLayout(views, minWidth, minHeight)
+
+                // Click pending intent to open main app
+                val clickIntent = Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+                
+                val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                }
+
+                val pendingIntent = PendingIntent.getActivity(
+                    context,
+                    0,
+                    clickIntent,
+                    pendingIntentFlags
+                )
+
+                views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+                appWidgetManager.updateAppWidget(widgetId, views)
+            }
+        } catch (e: Exception) {
+            Log.e("TigersWidget", "Error updating widget remote views: ${e.message}", e)
         }
     }
 
@@ -193,7 +220,7 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         if (opponentBitmap != null) {
             views.setImageViewBitmap(R.id.widget_opponent_logo, opponentBitmap)
         } else {
-            views.setImageViewResource(R.id.widget_opponent_logo, android.R.drawable.ic_menu_gallery)
+            views.setImageViewResource(R.id.widget_opponent_logo, R.drawable.ic_baseball_placeholder)
         }
 
         // Bind live Games Back & Playoff Spot values
@@ -220,7 +247,7 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         views.setTextViewText(R.id.widget_stadium_pitcher_info, "*Starting Pitcher: TBD")
         views.setTextViewText(R.id.widget_standing_h2h, "Standings unavailable")
         views.setImageViewResource(R.id.widget_tigers_logo, R.drawable.ic_tigers_logo)
-        views.setImageViewResource(R.id.widget_opponent_logo, android.R.drawable.ic_menu_gallery)
+        views.setImageViewResource(R.id.widget_opponent_logo, R.drawable.ic_baseball_placeholder)
 
         // Bind live Games Back & Playoff Spot values
         bindStandingsStats(context, views)
@@ -447,13 +474,15 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
             pendingIntentFlags
         )
 
-        val triggerAtMs = System.currentTimeMillis() + 60_000L
+        val intervalMs = 15 * 60 * 1000L // 15-minute battery-friendly periodic refresh
+        val triggerAt = android.os.SystemClock.elapsedRealtime() + intervalMs
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, triggerAtMs, pendingIntent)
-            } else {
-                alarmManager.set(android.app.AlarmManager.RTC_WAKEUP, triggerAtMs, pendingIntent)
-            }
+            alarmManager.setInexactRepeating(
+                android.app.AlarmManager.ELAPSED_REALTIME,
+                triggerAt,
+                intervalMs,
+                pendingIntent
+            )
         } catch (e: Exception) {
             Log.e("TigersWidget", "Error scheduling auto refresh alarm: ${e.message}")
         }
@@ -485,7 +514,7 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         fun triggerUpdate(context: Context) {
             Log.d("TigersWidget", "Triggering widget update intent broadcast")
             val intent = Intent(context, DetroitTigersWidgetProvider::class.java).apply {
-                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                action = ACTION_AUTO_UPDATE
             }
             context.sendBroadcast(intent)
         }

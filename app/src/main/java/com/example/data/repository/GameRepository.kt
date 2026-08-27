@@ -2,20 +2,15 @@ package com.example.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.example.data.api.MlbApiClient
 import com.example.data.api.MlbApiService
 import com.example.data.api.MlbGame
 import com.example.data.local.GameDao
 import com.example.data.model.UpcomingGame
 import com.example.widget.DetroitTigersWidgetProvider
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -24,26 +19,7 @@ class GameRepository(private val gameDao: GameDao) {
 
     val upcomingGames: Flow<List<UpcomingGame>> = gameDao.getUpcomingGames()
 
-    private val moshi = Moshi.Builder()
-        .addLast(KotlinJsonAdapterFactory())
-        .build()
-
-    private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
-    }
-
-    private val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor(loggingInterceptor)
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .build()
-
-    private val apiService = Retrofit.Builder()
-        .baseUrl("https://statsapi.mlb.com/")
-        .client(okHttpClient)
-        .addConverterFactory(MoshiConverterFactory.create(moshi))
-        .build()
-        .create(MlbApiService::class.java)
+    private val apiService: MlbApiService = MlbApiClient.apiService
 
     /**
      * Fetches up to 2 upcoming games for Detroit Tigers (team ID 116).
@@ -95,7 +71,7 @@ class GameRepository(private val gameDao: GameDao) {
                     val gameTime = parseIsoUtcToMillis(game.gameDate)
                     gameTime > currentTime - TimeUnit.HOURS.toMillis(4) // include games starting recently
                 }.sortedBy { parseIsoUtcToMillis(it.gameDate) }
-                 .take(2)
+                 .take(7)
 
                 if (upcomingMlbGames.isEmpty()) {
                     Log.d("GameRepository", "No upcoming games found in MLB API. Loading simulated schedule.")
@@ -132,9 +108,9 @@ class GameRepository(private val gameDao: GameDao) {
                                 if (split != null) {
                                     wins = split.wins ?: 0
                                     losses = split.losses ?: 0
-                                    era = split.era ?: 0.0
+                                    era = split.eraDouble
                                     strikeouts = split.strikeOuts ?: 0
-                                    whip = split.whip ?: 0.0
+                                    whip = split.whipDouble
                                 } else {
                                     // Fallback individual stats for Tarik Skubal or other key starters
                                     val (w, l, e, so, wh) = getRealisticStarterStats(finalPitcherName)
@@ -223,7 +199,6 @@ class GameRepository(private val gameDao: GameDao) {
                     gameDao.clearGames()
                     gameDao.insertGames(finalGamesList)
                     Log.d("GameRepository", "Successfully updated local cache with ${finalGamesList.size} live games.")
-                    DetroitTigersWidgetProvider.triggerUpdate(context)
                 }
             } catch (e: Exception) {
                 Log.e("GameRepository", "Error refreshing live schedule: ${e.message}", e)
@@ -568,28 +543,28 @@ class GameRepository(private val gameDao: GameDao) {
             )
         )
 
-        // Game 2: Minnesota Twins at Target Field (Away), in 1 day 5 hours
-        val time2 = currentTime + TimeUnit.DAYS.toMillis(1) + TimeUnit.HOURS.toMillis(5)
+        // Game 2: Cleveland Guardians at Comerica Park (Home), in 1 day 2 hours
+        val time2 = currentTime + TimeUnit.DAYS.toMillis(1) + TimeUnit.HOURS.toMillis(2)
         simulatedList.add(
             UpcomingGame(
                 gameId = 9991162,
                 gameTimeMillis = time2,
-                opponentName = "Minnesota Twins",
-                stadiumName = "Target Field",
-                stadiumSize = 38544,
+                opponentName = "Cleveland Guardians",
+                stadiumName = "Comerica Park",
+                stadiumSize = 41083,
                 pitcherName = "Reese Olson",
                 pitcherStatsWins = 4,
                 pitcherStatsLosses = 5,
                 pitcherStatsEra = 3.45,
                 pitcherStatsStrikeouts = 85,
                 pitcherStatsWhip = 1.16,
-                isHomeGame = false,
+                isHomeGame = true,
                 isSimulated = true,
                 seasonType = "Regular Season",
-                winProbability = 54,
+                winProbability = 55,
                 pitcherAge = 26,
                 tigersStanding = "4th in AL Central • 8th in AL",
-                headToHeadRecord = "Record: 3-5 vs MIN",
+                headToHeadRecord = "Record: 4-3 vs CLE",
                 pitcherId = 681857,
                 pitcherLastIp = 6.0,
                 pitcherLastSo = 6,
@@ -597,10 +572,67 @@ class GameRepository(private val gameDao: GameDao) {
             )
         )
 
+        // Game 3: Cleveland Guardians at Comerica Park (Home), in 2 days 4 hours
+        val time3 = currentTime + TimeUnit.DAYS.toMillis(2) + TimeUnit.HOURS.toMillis(4)
+        simulatedList.add(
+            UpcomingGame(
+                gameId = 9991163,
+                gameTimeMillis = time3,
+                opponentName = "Cleveland Guardians",
+                stadiumName = "Comerica Park",
+                stadiumSize = 41083,
+                pitcherName = "Casey Mize",
+                pitcherStatsWins = 3,
+                pitcherStatsLosses = 4,
+                pitcherStatsEra = 4.20,
+                pitcherStatsStrikeouts = 62,
+                pitcherStatsWhip = 1.28,
+                isHomeGame = true,
+                isSimulated = true,
+                seasonType = "Regular Season",
+                winProbability = 51,
+                pitcherAge = 28,
+                tigersStanding = "4th in AL Central • 8th in AL",
+                headToHeadRecord = "Record: 4-3 vs CLE",
+                pitcherId = 663554,
+                pitcherLastIp = 5.2,
+                pitcherLastSo = 5,
+                pitcherHand = "R"
+            )
+        )
+
+        // Game 4: Minnesota Twins at Target Field (Away), in 3 days 7 hours
+        val time4 = currentTime + TimeUnit.DAYS.toMillis(3) + TimeUnit.HOURS.toMillis(7)
+        simulatedList.add(
+            UpcomingGame(
+                gameId = 9991164,
+                gameTimeMillis = time4,
+                opponentName = "Minnesota Twins",
+                stadiumName = "Target Field",
+                stadiumSize = 38544,
+                pitcherName = "Keider Montero",
+                pitcherStatsWins = 4,
+                pitcherStatsLosses = 5,
+                pitcherStatsEra = 4.60,
+                pitcherStatsStrikeouts = 72,
+                pitcherStatsWhip = 1.30,
+                isHomeGame = false,
+                isSimulated = true,
+                seasonType = "Regular Season",
+                winProbability = 48,
+                pitcherAge = 24,
+                tigersStanding = "4th in AL Central • 8th in AL",
+                headToHeadRecord = "Record: 3-5 vs MIN",
+                pitcherId = 682855,
+                pitcherLastIp = 5.0,
+                pitcherLastSo = 4,
+                pitcherHand = "R"
+            )
+        )
+
         gameDao.clearGames()
         gameDao.insertGames(simulatedList)
-        Log.d("GameRepository", "Updated cache with 2 simulated upcoming matches.")
-        DetroitTigersWidgetProvider.triggerUpdate(context)
+        Log.d("GameRepository", "Updated cache with ${simulatedList.size} simulated upcoming matches.")
     }
 
     private fun parseIsoUtcToMillis(isoString: String?): Long {
