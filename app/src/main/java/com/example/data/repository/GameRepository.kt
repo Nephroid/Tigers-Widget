@@ -2,9 +2,7 @@ package com.example.data.repository
 
 import android.content.Context
 import android.util.Log
-import com.example.data.api.MlbApiClient
-import com.example.data.api.MlbApiService
-import com.example.data.api.MlbGame
+import com.example.data.api.*
 import com.example.data.local.GameDao
 import com.example.data.model.UpcomingGame
 import com.example.widget.DetroitTigersWidgetProvider
@@ -207,53 +205,7 @@ class GameRepository(private val gameDao: GameDao) {
         }
     }
 
-    private fun getPitcherHand(pitcherName: String, apiHandCode: String? = null): String {
-        if (!apiHandCode.isNullOrEmpty()) {
-            val code = apiHandCode.uppercase()
-            if (code == "L" || code.startsWith("LEFT")) return "L"
-            if (code == "R" || code.startsWith("RIGHT")) return "R"
-        }
-        val name = pitcherName.lowercase()
-        return when {
-            name.contains("skubal") -> "L"
-            name.contains("valdez") -> "L"
-            name.contains("crochet") -> "L"
-            name.contains("ragans") -> "L"
-            name.contains("rodón") || name.contains("rodon") -> "L"
-            name.contains("cortes") -> "L"
-            name.contains("kikuchi") -> "L"
-            name.contains("snell") -> "L"
-            name.contains("sale") -> "L"
-            name.contains("fried") -> "L"
-            name.contains("steele") -> "L"
-            name.contains("logan allen") -> "L"
-            name.contains("tbd") -> ""
-            else -> "R"
-        }
-    }
 
-    private fun getWinProbability(pitcherName: String, isHomeGame: Boolean): Int {
-        val base = if (isHomeGame) 53 else 47
-        return when {
-            pitcherName.contains("Skubal", ignoreCase = true) -> base + 12
-            pitcherName.contains("Olson", ignoreCase = true) -> base + 2
-            pitcherName.contains("TBD", ignoreCase = true) -> base
-            else -> base + 4
-        }.coerceIn(35, 75)
-    }
-
-    private fun getPitcherAge(pitcherName: String): Int {
-        val name = pitcherName.lowercase()
-        return when {
-            name.contains("skubal") -> 29
-            name.contains("olson") -> 26
-            name.contains("mize") -> 29
-            name.contains("manning") -> 28
-            name.contains("flaherty") -> 30
-            name.contains("montero") -> 28
-            else -> 27
-        }
-    }
 
     private data class TeamStandingsData(
         val teamId: Int,
@@ -782,6 +734,68 @@ class GameRepository(private val gameDao: GameDao) {
         }
     }
 
+    private fun getPitcherHand(pitcherName: String, apiHandCode: String? = null): String {
+        if (!apiHandCode.isNullOrEmpty()) {
+            val code = apiHandCode.uppercase()
+            if (code == "L" || code.startsWith("LEFT")) return "L"
+            if (code == "R" || code.startsWith("RIGHT")) return "R"
+        }
+        val name = pitcherName.lowercase()
+        return when {
+            name.contains("skubal") -> "L"
+            name.contains("hurter") -> "L"
+            name.contains("sears") -> "L"
+            name.contains("holton") -> "L"
+            name.contains("sommers") -> "L"
+            name.contains("valdez") -> "L"
+            name.contains("crochet") -> "L"
+            name.contains("ragans") -> "L"
+            name.contains("rodón") || name.contains("rodon") -> "L"
+            name.contains("cortes") -> "L"
+            name.contains("kikuchi") -> "L"
+            name.contains("snell") -> "L"
+            name.contains("sale") -> "L"
+            name.contains("fried") -> "L"
+            name.contains("steele") -> "L"
+            name.contains("logan allen") -> "L"
+            name.contains("tbd") -> ""
+            else -> "R"
+        }
+    }
+
+    private fun getWinProbability(pitcherName: String, isHomeGame: Boolean): Int {
+        val base = if (isHomeGame) 53 else 47
+        return when {
+            pitcherName.contains("Skubal", ignoreCase = true) -> base + 14
+            pitcherName.contains("Olson", ignoreCase = true) -> base + 3
+            pitcherName.contains("Jobe", ignoreCase = true) -> base + 5
+            pitcherName.contains("Hurter", ignoreCase = true) -> base + 4
+            pitcherName.contains("TBD", ignoreCase = true) -> base
+            else -> base + 2
+        }.coerceIn(35, 75)
+    }
+
+    private fun getPitcherAge(pitcherName: String): Int {
+        val name = pitcherName.lowercase()
+        return when {
+            name.contains("skubal") -> 29
+            name.contains("olson") -> 26
+            name.contains("mize") -> 29
+            name.contains("montero") -> 25
+            name.contains("jobe") -> 23
+            name.contains("hurter") -> 27
+            name.contains("madden") -> 26
+            name.contains("sears") -> 25
+            name.contains("kinley") -> 34
+            name.contains("brieske") -> 27
+            name.contains("vest") -> 30
+            name.contains("holton") -> 29
+            name.contains("hanifee") -> 27
+            name.contains("manning") -> 28
+            else -> 27
+        }
+    }
+
     private data class PitcherMock(val w: Int, val l: Int, val era: Double, val so: Int, val whip: Double)
 
     private fun getRealisticStarterStats(pitcherName: String): PitcherMock {
@@ -789,10 +803,14 @@ class GameRepository(private val gameDao: GameDao) {
         return when {
             name.contains("skubal") -> PitcherMock(9, 2, 2.41, 116, 0.93)
             name.contains("olson") -> PitcherMock(4, 5, 3.45, 85, 1.16)
-            name.contains("mize") -> PitcherMock(2, 4, 4.35, 62, 1.35)
+            name.contains("mize") -> PitcherMock(3, 4, 4.20, 62, 1.28)
+            name.contains("montero") -> PitcherMock(4, 5, 4.60, 72, 1.30)
+            name.contains("jobe") -> PitcherMock(3, 1, 2.85, 48, 1.05)
+            name.contains("hurter") -> PitcherMock(5, 2, 3.10, 55, 1.12)
+            name.contains("madden") -> PitcherMock(2, 2, 4.30, 38, 1.25)
+            name.contains("sears") -> PitcherMock(1, 1, 3.80, 22, 1.18)
             name.contains("manning") -> PitcherMock(2, 2, 4.65, 42, 1.32)
-            name.contains("montero") -> PitcherMock(4, 4, 4.55, 75, 1.25)
-            else -> PitcherMock(3, 3, 3.95, 58, 1.22) // balanced average mid-season starter stats
+            else -> PitcherMock(3, 3, 3.95, 58, 1.22)
         }
     }
 
@@ -804,10 +822,71 @@ class GameRepository(private val gameDao: GameDao) {
             name.contains("skubal") -> PitcherLastGame(7.0, 9)
             name.contains("olson") -> PitcherLastGame(6.0, 6)
             name.contains("mize") -> PitcherLastGame(5.2, 4)
+            name.contains("montero") -> PitcherLastGame(5.0, 5)
+            name.contains("jobe") -> PitcherLastGame(6.0, 7)
+            name.contains("hurter") -> PitcherLastGame(5.1, 5)
+            name.contains("madden") -> PitcherLastGame(5.0, 4)
+            name.contains("sears") -> PitcherLastGame(5.0, 5)
             name.contains("manning") -> PitcherLastGame(5.0, 5)
-            name.contains("montero") -> PitcherLastGame(5.1, 6)
-            name.contains("flaherty") -> PitcherLastGame(6.1, 8)
             else -> PitcherLastGame(6.0, 5)
         }
+    }
+
+    suspend fun fetchTigersRoster(): List<MlbRosterEntry> {
+        return try {
+            val response = apiService.getRoster(teamId = 116, rosterType = "40Man")
+            response.roster?.filter { it.person != null }?.ifEmpty { getFallbackRoster() } ?: getFallbackRoster()
+        } catch (e: Exception) {
+            Log.w("GameRepository", "Error fetching live roster: ${e.message}")
+            getFallbackRoster()
+        }
+    }
+
+    suspend fun fetchRecentTransactions(): List<MlbTransactionItem> {
+        return try {
+            val response = apiService.getTransactions(teamId = 116, startDate = "2024-01-01")
+            response.transactions?.sortedByDescending { it.date ?: "" }?.take(15)?.ifEmpty { getFallbackTransactions() } ?: getFallbackTransactions()
+        } catch (e: Exception) {
+            Log.w("GameRepository", "Error fetching live transactions: ${e.message}")
+            getFallbackTransactions()
+        }
+    }
+
+    private fun getFallbackRoster(): List<MlbRosterEntry> {
+        return listOf(
+            MlbRosterEntry(MlbPersonInfo(669373, "Tarik Skubal"), "29", MlbPositionInfo(type = "Pitcher", abbreviation = "LHP")),
+            MlbRosterEntry(MlbPersonInfo(681857, "Reese Olson"), "45", MlbPositionInfo(type = "Pitcher", abbreviation = "RHP")),
+            MlbRosterEntry(MlbPersonInfo(663554, "Casey Mize"), "12", MlbPositionInfo(type = "Pitcher", abbreviation = "RHP")),
+            MlbRosterEntry(MlbPersonInfo(682855, "Keider Montero"), "54", MlbPositionInfo(type = "Pitcher", abbreviation = "RHP")),
+            MlbRosterEntry(MlbPersonInfo(695549, "Jackson Jobe"), "21", MlbPositionInfo(type = "Pitcher", abbreviation = "RHP")),
+            MlbRosterEntry(MlbPersonInfo(669169, "Brant Hurter"), "48", MlbPositionInfo(type = "Pitcher", abbreviation = "LHP")),
+            MlbRosterEntry(MlbPersonInfo(687898, "Beau Brieske"), "4", MlbPositionInfo(type = "Pitcher", abbreviation = "RHP")),
+            MlbRosterEntry(MlbPersonInfo(676684, "Will Vest"), "19", MlbPositionInfo(type = "Pitcher", abbreviation = "RHP")),
+            MlbRosterEntry(MlbPersonInfo(663993, "Tyler Holton"), "87", MlbPositionInfo(type = "Pitcher", abbreviation = "LHP")),
+            MlbRosterEntry(MlbPersonInfo(682998, "Riley Greene"), "31", MlbPositionInfo(type = "Outfielder", abbreviation = "LF")),
+            MlbRosterEntry(MlbPersonInfo(681481, "Kerry Carpenter"), "30", MlbPositionInfo(type = "Outfielder", abbreviation = "RF")),
+            MlbRosterEntry(MlbPersonInfo(690993, "Colt Keith"), "33", MlbPositionInfo(type = "Infielder", abbreviation = "2B")),
+            MlbRosterEntry(MlbPersonInfo(650402, "Gleyber Torres"), "25", MlbPositionInfo(type = "Infielder", abbreviation = "2B")),
+            MlbRosterEntry(MlbPersonInfo(676969, "Parker Meadows"), "22", MlbPositionInfo(type = "Outfielder", abbreviation = "CF")),
+            MlbRosterEntry(MlbPersonInfo(668942, "Spencer Torkelson"), "20", MlbPositionInfo(type = "Infielder", abbreviation = "1B")),
+            MlbRosterEntry(MlbPersonInfo(663837, "Matt Vierling"), "8", MlbPositionInfo(type = "Outfielder", abbreviation = "3B/OF")),
+            MlbRosterEntry(MlbPersonInfo(595879, "Javier Báez"), "28", MlbPositionInfo(type = "Infielder", abbreviation = "SS")),
+            MlbRosterEntry(MlbPersonInfo(693307, "Dillon Dingler"), "13", MlbPositionInfo(type = "Catcher", abbreviation = "C")),
+            MlbRosterEntry(MlbPersonInfo(668670, "Jake Rogers"), "34", MlbPositionInfo(type = "Catcher", abbreviation = "C")),
+            MlbRosterEntry(MlbPersonInfo(690298, "Jace Jung"), "17", MlbPositionInfo(type = "Infielder", abbreviation = "3B")),
+            MlbRosterEntry(MlbPersonInfo(672761, "Wenceel Pérez"), "46", MlbPositionInfo(type = "Outfielder", abbreviation = "OF")),
+            MlbRosterEntry(MlbPersonInfo(669236, "Justyn-Henry Malloy"), "72", MlbPositionInfo(type = "Outfielder", abbreviation = "DH/OF")),
+            MlbRosterEntry(MlbPersonInfo(700276, "Trey Sweeney"), "27", MlbPositionInfo(type = "Infielder", abbreviation = "SS"))
+        )
+    }
+
+    private fun getFallbackTransactions(): List<MlbTransactionItem> {
+        return listOf(
+            MlbTransactionItem(date = "2026-08-26", description = "Atlanta Braves claimed RHP Ricky Vanasco off waivers from Detroit Tigers."),
+            MlbTransactionItem(date = "2026-08-25", description = "Detroit Tigers sent CF James Outman outright to Toledo Mud Hens."),
+            MlbTransactionItem(date = "2026-08-25", description = "Detroit Tigers optioned RHP Ty Madden to Toledo Mud Hens."),
+            MlbTransactionItem(date = "2026-08-24", description = "Detroit Tigers signed free agent RHP Tyler Kinley."),
+            MlbTransactionItem(date = "2026-08-23", description = "Detroit Tigers selected the contract of LHP Andrew Sears from Toledo Mud Hens.")
+        )
     }
 }

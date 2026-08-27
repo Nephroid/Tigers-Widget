@@ -77,6 +77,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _isWeatherLoading = MutableStateFlow(false)
     val isWeatherLoading: StateFlow<Boolean> = _isWeatherLoading.asStateFlow()
 
+    private val _roster = MutableStateFlow<List<com.example.data.api.MlbRosterEntry>>(emptyList())
+    val roster: StateFlow<List<com.example.data.api.MlbRosterEntry>> = _roster.asStateFlow()
+
+    private val _transactions = MutableStateFlow<List<com.example.data.api.MlbTransactionItem>>(emptyList())
+    val transactions: StateFlow<List<com.example.data.api.MlbTransactionItem>> = _transactions.asStateFlow()
+
+    private val _isRosterLoading = MutableStateFlow(false)
+    val isRosterLoading: StateFlow<Boolean> = _isRosterLoading.asStateFlow()
+
     private var countdownJob: Job? = null
 
     init {
@@ -86,6 +95,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         // Fetch Google Search Grounded Standings initially
         fetchGroundedStandings()
 
+        // Fetch Tigers Roster and Latest Transactions
+        fetchRosterAndTransactions()
+
         // Reactively start countdown whenever games list changes
         viewModelScope.launch {
             upcomingGames.collect { games ->
@@ -94,6 +106,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 if (firstGame != null) {
                     fetchUpcomingGameWeather(firstGame.stadiumName)
                 }
+            }
+        }
+    }
+
+    fun fetchRosterAndTransactions() {
+        viewModelScope.launch {
+            _isRosterLoading.value = true
+            try {
+                _roster.value = repository.fetchTigersRoster()
+                _transactions.value = repository.fetchRecentTransactions()
+            } catch (e: Exception) {
+                Log.e("GameViewModel", "Error loading roster/transactions: ${e.message}")
+            } finally {
+                _isRosterLoading.value = false
             }
         }
     }
@@ -194,6 +220,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val currentSimulatedMode = _useSimulatedMode.value
         refreshData(forceSimulated = currentSimulatedMode)
         fetchGroundedStandings()
+        fetchRosterAndTransactions()
     }
 
     fun toggleMode() {

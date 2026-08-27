@@ -164,7 +164,10 @@ fun GameDashboard(
                     // 2. Live Standings & Playoff Race
                     StandingsAndRaceSection(viewModel = viewModel)
 
-                    // 3. Upcoming Schedule Section
+                    // 3. 40-Man Roster & Recent Transactions
+                    TigersRosterAndTransactionsSection(viewModel = viewModel)
+
+                    // 4. Upcoming Schedule Section
                     if (games.size > 1) {
                         UpcomingScheduleSection(games = games.drop(1))
                     }
@@ -1356,15 +1359,264 @@ fun EmptyStatePlaceholder(isRefreshing: Boolean) {
 fun getTeamAbbreviation(teamName: String): String {
     val upper = teamName.uppercase()
     return when {
-        upper.contains("YAN") || upper.contains("YORK") -> "NYY"
-        upper.contains("GUARD") || upper.contains("CLE") -> "CLE"
-        upper.contains("SOX") || upper.contains("BOSTON") -> "BOS"
-        upper.contains("BLUE") || upper.contains("TOR") -> "TOR"
-        upper.contains("ROYAL") || upper.contains("KANSAS") -> "KC"
         upper.contains("TIGER") || upper.contains("DET") -> "DET"
-        upper.contains("ATHLET") || upper.contains("OAK") -> "ATH"
+        upper.contains("GUARD") || upper.contains("CLE") || upper.contains("INDIAN") -> "CLE"
         upper.contains("TWIN") || upper.contains("MIN") -> "MIN"
-        upper.contains("WHITE") || upper.contains("CWS") -> "CWS"
+        upper.contains("ROYAL") || upper.contains("KANSAS") || upper.contains("KC") -> "KC"
+        upper.contains("WHITE SOX") || upper.contains("CHW") || upper.contains("CWS") -> "CWS"
+        upper.contains("RED SOX") || upper.contains("BOS") || upper.contains("BOSTON") -> "BOS"
+        upper.contains("BLUE JAY") || upper.contains("TOR") -> "TOR"
+        upper.contains("YANKE") || upper.contains("NYY") -> "NYY"
+        upper.contains("MET") || upper.contains("NYM") -> "NYM"
+        upper.contains("ORIOLE") || upper.contains("BAL") -> "BAL"
+        upper.contains("RAY") || upper.contains("TAMPA") || upper.contains("TB") -> "TB"
+        upper.contains("ASTRO") || upper.contains("HOU") -> "HOU"
+        upper.contains("ATHLET") || upper.contains("OAK") || upper.contains("ATH") -> "OAK"
+        upper.contains("ANGEL") || upper.contains("LAA") -> "LAA"
+        upper.contains("MARINER") || upper.contains("SEA") -> "SEA"
+        upper.contains("RANGER") || upper.contains("TEX") -> "TEX"
+        upper.contains("BRAVE") || upper.contains("ATL") -> "ATL"
+        upper.contains("MARLIN") || upper.contains("MIA") -> "MIA"
+        upper.contains("PHILLI") || upper.contains("PHI") -> "PHI"
+        upper.contains("NATIONAL") || upper.contains("WSH") || upper.contains("WAS") -> "WSH"
+        upper.contains("CUB") || upper.contains("CHC") -> "CHC"
+        upper.contains("RED") || upper.contains("CIN") -> "CIN"
+        upper.contains("BREWER") || upper.contains("MIL") -> "MIL"
+        upper.contains("PIRATE") || upper.contains("PIT") -> "PIT"
+        upper.contains("CARDINAL") || upper.contains("STL") -> "STL"
+        upper.contains("DIAMONDBACK") || upper.contains("D-BACK") || upper.contains("ARI") -> "ARI"
+        upper.contains("ROCKIE") || upper.contains("COL") -> "COL"
+        upper.contains("DODGER") || upper.contains("LAD") -> "LAD"
+        upper.contains("PADRE") || upper.contains("SD") -> "SD"
+        upper.contains("GIANT") || upper.contains("SF") -> "SF"
         else -> teamName.take(3).uppercase()
+    }
+}
+
+@Composable
+fun TigersRosterAndTransactionsSection(viewModel: GameViewModel) {
+    val roster by viewModel.roster.collectAsStateWithLifecycle()
+    val transactions by viewModel.transactions.collectAsStateWithLifecycle()
+    val isRosterLoading by viewModel.isRosterLoading.collectAsStateWithLifecycle()
+
+    var selectedTab by remember { mutableStateOf(0) } // 0 = Roster, 1 = Transactions
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Tigers Squad & Roster Moves",
+                style = TextStyle(
+                    color = Color(0xFFFF823C),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    letterSpacing = 0.5.sp
+                ),
+                modifier = Modifier.padding(start = 2.dp)
+            )
+
+            // Pill toggle for Roster vs Transactions
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color(0xFF0C2340).copy(alpha = 0.8f))
+                    .padding(2.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (selectedTab == 0) Color(0xFFFA4616) else Color.Transparent)
+                        .clickable { selectedTab = 0 }
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "40-Man (${roster.size})",
+                        style = TextStyle(
+                            color = if (selectedTab == 0) Color.White else Color.White.copy(alpha = 0.6f),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.5.sp
+                        )
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (selectedTab == 1) Color(0xFFFA4616) else Color.Transparent)
+                        .clickable { selectedTab = 1 }
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Transactions",
+                        style = TextStyle(
+                            color = if (selectedTab == 1) Color.White else Color.White.copy(alpha = 0.6f),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.5.sp
+                        )
+                    )
+                }
+            }
+        }
+
+        Card(
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF0C2340).copy(alpha = 0.45f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, Color(0xFFFA4616).copy(alpha = 0.15f), RoundedCornerShape(18.dp))
+        ) {
+            Column(
+                modifier = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (selectedTab == 0) {
+                    // 40-Man Roster View
+                    val pitchers = roster.filter { it.position?.type == "Pitcher" || it.position?.abbreviation?.contains("P") == true }
+                    val positionPlayers = roster.filter { it !in pitchers }
+
+                    if (roster.isEmpty() && isRosterLoading) {
+                        Box(modifier = Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Color(0xFFFA4616), modifier = Modifier.size(24.dp))
+                        }
+                    } else {
+                        // Pitchers Group
+                        Text(
+                            text = "PITCHING STAFF (${pitchers.size})",
+                            style = TextStyle(color = Color(0xFFFFC107), fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.5.sp)
+                        )
+                        FlowRowLayout(
+                            items = pitchers,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Position Players Group
+                        Text(
+                            text = "POSITION PLAYERS (${positionPlayers.size})",
+                            style = TextStyle(color = Color(0xFFFFC107), fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.5.sp)
+                        )
+                        FlowRowLayout(
+                            items = positionPlayers,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                } else {
+                    // Transactions View
+                    if (transactions.isEmpty() && isRosterLoading) {
+                        Box(modifier = Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Color(0xFFFA4616), modifier = Modifier.size(24.dp))
+                        }
+                    } else if (transactions.isEmpty()) {
+                        Text(
+                            text = "No recent transactions found.",
+                            style = TextStyle(color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
+                        )
+                    } else {
+                        transactions.take(8).forEach { tx ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFF1B365D).copy(alpha = 0.25f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = tx.date ?: "Recent",
+                                        style = TextStyle(color = Color(0xFFFA4616), fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                                    )
+                                    tx.typeDesc?.let {
+                                        Text(
+                                            text = it,
+                                            style = TextStyle(color = Color.White.copy(alpha = 0.5f), fontSize = 9.5.sp)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = tx.description ?: "Transaction update",
+                                    style = TextStyle(color = Color.White, fontSize = 11.sp, lineHeight = 14.sp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FlowRowLayout(
+    items: List<com.example.data.api.MlbRosterEntry>,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        items.chunked(2).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                rowItems.forEach { player ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(Color(0xFF1B365D).copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 5.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "#${player.jerseyNumber ?: "--"}",
+                                style = TextStyle(
+                                    color = Color(0xFFFA4616),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.5.sp,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            )
+                            Text(
+                                text = player.person?.fullName ?: "Player",
+                                style = TextStyle(
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 11.sp
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = player.position?.abbreviation ?: "",
+                                style = TextStyle(
+                                    color = Color.White.copy(alpha = 0.5f),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 9.sp
+                                )
+                            )
+                        }
+                    }
+                }
+                if (rowItems.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
     }
 }

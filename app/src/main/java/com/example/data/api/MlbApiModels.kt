@@ -136,3 +136,56 @@ data class MlbTeamRecord(
     val hasWildcard: Boolean? = null,
     val clinched: Boolean? = null
 )
+
+@JsonClass(generateAdapter = true)
+data class MlbRosterResponse(
+    val roster: List<MlbRosterEntry>?
+)
+
+@JsonClass(generateAdapter = true)
+data class MlbRosterEntry(
+    val person: MlbPersonInfo?,
+    val jerseyNumber: String? = null,
+    val position: MlbPositionInfo? = null,
+    val status: MlbStatusInfo? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class MlbPersonInfo(
+    val id: Int,
+    val fullName: String?,
+    val link: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class MlbPositionInfo(
+    val code: String? = null,
+    val name: String? = null,
+    val type: String? = null,
+    val abbreviation: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class MlbStatusInfo(
+    val code: String? = null,
+    val description: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class MlbTransactionsResponse(
+    val transactions: List<MlbTransactionItem>?
+)
+
+@JsonClass(generateAdapter = true)
+data class MlbTransactionItem(
+    val id: Int? = null,
+    val person: MlbPersonInfo? = null,
+    val fromTeam: MlbTeamInfo? = null,
+    val toTeam: MlbTeamInfo? = null,
+    val date: String? = null,
+    val effectiveDate: String? = null,
+    val resolutionDate: String? = null,
+    val typeCode: String? = null,
+    val typeDesc: String? = null,
+    val description: String? = null
+)

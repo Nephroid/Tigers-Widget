@@ -27,4 +27,17 @@ interface MlbApiService {
         @Query("leagueId") leagueId: Int = 103, // AL is 103
         @Query("season") season: String? = null
     ): MlbStandingsResponse
+
+    @GET("api/v1/teams/{teamId}/roster")
+    suspend fun getRoster(
+        @Path("teamId") teamId: Int = 116,
+        @Query("rosterType") rosterType: String = "40Man"
+    ): MlbRosterResponse
+
+    @GET("api/v1/transactions")
+    suspend fun getTransactions(
+        @Query("teamId") teamId: Int = 116,
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String? = null
+    ): MlbTransactionsResponse
 }
