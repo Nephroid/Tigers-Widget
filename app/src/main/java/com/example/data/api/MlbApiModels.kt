@@ -118,7 +118,21 @@ data class MlbDivisionInfo(
 @JsonClass(generateAdapter = true)
 data class MlbTeamRecord(
     val team: MlbTeamInfo?,
-    val divisionRank: String?,
-    val wins: Int?,
-    val losses: Int?
+    val divisionRank: String? = null,
+    val leagueRank: String? = null,
+    val wildCardRank: String? = null,
+    val sportRank: String? = null,
+    val gamesPlayed: Int? = null,
+    val gamesBack: String? = null,
+    val wildCardGamesBack: String? = null,
+    val divisionGamesBack: String? = null,
+    val leagueGamesBack: String? = null,
+    val wins: Int? = null,
+    val losses: Int? = null,
+    val winningPercentage: String? = null,
+    val eliminationNumber: String? = null,
+    val wildCardEliminationNumber: String? = null,
+    val divisionLeader: Boolean? = null,
+    val hasWildcard: Boolean? = null,
+    val clinched: Boolean? = null
 )

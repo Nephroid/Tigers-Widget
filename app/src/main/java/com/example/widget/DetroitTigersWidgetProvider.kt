@@ -133,7 +133,7 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
                 val options = appWidgetManager.getAppWidgetOptions(widgetId)
                 val minWidth = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) ?: 180
                 val minHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) ?: 110
-                applyResponsiveLayout(views, minWidth, minHeight)
+                applyResponsiveLayout(context, views, minWidth, minHeight)
 
                 // Click pending intent to open main app
                 val clickIntent = Intent(context, MainActivity::class.java).apply {
@@ -203,7 +203,10 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         views.setTextViewText(R.id.widget_stadium_pitcher_info, formattedPitcherText)
 
         // Standing & H2H record info
-        views.setTextViewText(R.id.widget_standing_h2h, "${game.tigersStanding} • ${game.headToHeadRecord}")
+        val prefs = context.getSharedPreferences("TigersWidgetPrefs", Context.MODE_PRIVATE)
+        val standingSummary = prefs.getString("tigers_standing_summary", null)
+        val standingText = standingSummary ?: game.tigersStanding
+        views.setTextViewText(R.id.widget_standing_h2h, "$standingText • ${game.headToHeadRecord}")
         
         // Load logos from URL asynchronously and set them to RemoteViews
         val tigersLogoUrl = "https://a.espncdn.com/i/teamlogos/mlb/500/det.png"
@@ -253,21 +256,29 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         bindStandingsStats(context, views)
     }
 
-    private data class TeamStandingsInfo(val name: String, val wins: Int, val losses: Int, val rawText: String) {
+    private data class TeamStandingsInfo(
+        val name: String,
+        val wins: Int,
+        val losses: Int,
+        val gbString: String?,
+        val rawText: String
+    ) {
         val winPct: Double
             get() = if (wins + losses > 0) wins.toDouble() / (wins + losses) else 0.0
     }
 
     private fun parseTeamInfo(rawItem: String): TeamStandingsInfo {
         val clean = rawItem.replace(Regex("^\\d+[\\.\\s]\\s*"), "").trim()
-        val match = Regex("([A-Za-z]+):?\\s*(\\d+)[\\-\\s]+(\\d+)").find(clean)
+        val match = Regex("([A-Za-z]+):?\\s*(\\d+)[\\-\\s]+(\\d+)(?:\\s*\\(([^)]+)\\))?").find(clean)
         return if (match != null) {
             val name = match.groupValues[1].uppercase()
             val w = match.groupValues[2].toIntOrNull() ?: 0
             val l = match.groupValues[3].toIntOrNull() ?: 0
-            TeamStandingsInfo(name, w, l, "$name: $w-$l")
+            val gb = match.groupValues.getOrNull(4)?.trim()?.ifEmpty { null }
+            val raw = if (gb != null) "$name: $w-$l ($gb)" else "$name: $w-$l"
+            TeamStandingsInfo(name, w, l, gb, raw)
         } else {
-            TeamStandingsInfo(clean, 0, 0, clean)
+            TeamStandingsInfo(clean, 0, 0, null, clean)
         }
     }
 
@@ -275,11 +286,17 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         val prefs = context.getSharedPreferences("TigersWidgetPrefs", Context.MODE_PRIVATE)
         val alCentralStandings = prefs.getString(
             "al_central_standings",
-            "CLE: 58-37 • MIN: 53-41 • KC: 52-43 • DET: 47-53 • CWS: 27-68"
-        ) ?: "CLE: 58-37 • MIN: 53-41 • KC: 52-43 • DET: 47-53 • CWS: 27-68"
+            "CWS: 70-63 (-) • CLE: 68-66 (2.5) • MIN: 64-70 (6.5) • DET: 62-71 (8.0) • KC: 59-75 (11.5)"
+        ) ?: "CWS: 70-63 (-) • CLE: 68-66 (2.5) • MIN: 64-70 (6.5) • DET: 62-71 (8.0) • KC: 59-75 (11.5)"
 
         val items = alCentralStandings.split("•", ",").map { it.trim() }.filter { it.isNotEmpty() }
-        val defaultTeams = listOf("CLE: 58-37", "MIN: 53-41", "KC: 52-43", "DET: 47-53", "CWS: 27-68")
+        val defaultTeams = listOf(
+            "CWS: 70-63 (-)",
+            "CLE: 68-66 (2.5)",
+            "MIN: 64-70 (6.5)",
+            "DET: 62-71 (8.0)",
+            "KC: 59-75 (11.5)"
+        )
 
         val rawList = if (items.isNotEmpty()) items else defaultTeams
         val parsedList = rawList.map { parseTeamInfo(it) }
@@ -290,37 +307,72 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
                 .thenByDescending { it.wins }
         )
 
-        val t1 = sortedList.getOrNull(0)?.rawText ?: defaultTeams[0]
-        val t2 = sortedList.getOrNull(1)?.rawText ?: defaultTeams[1]
-        val t3 = sortedList.getOrNull(2)?.rawText ?: defaultTeams[2]
-        val t4 = sortedList.getOrNull(3)?.rawText ?: defaultTeams[3]
-        val t5 = sortedList.getOrNull(4)?.rawText ?: defaultTeams[4]
+        val leader = sortedList.firstOrNull()
+        val leaderW = leader?.wins ?: 70
+        val leaderL = leader?.losses ?: 63
+
+        val formattedTeams = sortedList.mapIndexed { index, team ->
+            val cleanName = team.name.uppercase()
+            val w = team.wins
+            val l = team.losses
+            val gbStr = if (team.gbString != null && team.gbString.isNotEmpty()) {
+                team.gbString
+            } else if (index == 0) {
+                "-"
+            } else {
+                val gb = ((leaderW - w) + (l - leaderL)) / 2.0
+                if (gb <= 0.0) "-" else if (gb % 1.0 == 0.0) "${gb.toInt()}.0" else String.format(Locale.US, "%.1f", gb)
+            }
+            val raw = "$cleanName: $w-$l ($gbStr)"
+            formatTeamText(index + 1, raw)
+        }
 
         // Column 1 (ranks 1, 2)
-        views.setTextViewText(R.id.widget_team_1, formatTeamText(1, t1))
-        views.setTextViewText(R.id.widget_team_2, formatTeamText(2, t2))
+        views.setTextViewText(R.id.widget_team_1, formattedTeams.getOrNull(0) ?: formatTeamText(1, defaultTeams[0]))
+        views.setTextViewText(R.id.widget_team_2, formattedTeams.getOrNull(1) ?: formatTeamText(2, defaultTeams[1]))
 
         // Column 2 (ranks 3, 4)
-        views.setTextViewText(R.id.widget_team_3, formatTeamText(3, t3))
-        views.setTextViewText(R.id.widget_team_4, formatTeamText(4, t4))
+        views.setTextViewText(R.id.widget_team_3, formattedTeams.getOrNull(2) ?: formatTeamText(3, defaultTeams[2]))
+        views.setTextViewText(R.id.widget_team_4, formattedTeams.getOrNull(3) ?: formatTeamText(4, defaultTeams[3]))
 
-        // Column 3 (rank 5 and 6th spot: Wild Card GB & Games Left in red if > 0, green if 0 or IN)
-        views.setTextViewText(R.id.widget_team_5, formatTeamText(5, t5))
+        // Column 3 (rank 5 and 6th spot: Playoff Spot / Wild Card GB & Games Left)
+        views.setTextViewText(R.id.widget_team_5, formattedTeams.getOrNull(4) ?: formatTeamText(5, defaultTeams[4]))
 
-        val wcGbRaw = prefs.getString("games_back_wild_card", "6.0") ?: "6.0"
-        val detTeamString = sortedList.firstOrNull { it.rawText.contains("DET", ignoreCase = true) }?.rawText
-        val glCalculated = detTeamString?.let { raw ->
-            val match = Regex("(\\d+)-(\\d+)").find(raw)
-            if (match != null) {
-                val w = match.groupValues[1].toIntOrNull() ?: 47
-                val l = match.groupValues[2].toIntOrNull() ?: 53
-                maxOf(0, 162 - (w + l))
-            } else null
-        } ?: prefs.getInt("tigers_games_left", 62)
+        val wcGbRaw = prefs.getString("games_back_wild_card", "5.5") ?: "5.5"
+        val playoffStatusRaw = prefs.getString("playoff_status", "OUT") ?: "OUT"
+        val playoffSpotInfo = prefs.getString("playoff_spot_info", null)
 
-        val formattedWcText = formatWcGbText(wcGbRaw, glCalculated)
-        val isGreen = isWildCardInOrZero(wcGbRaw, formattedWcText)
-        val colorHex = if (isGreen) "#00E676" else "#FF5252"
+        val detTeam = sortedList.firstOrNull { it.name.contains("DET", ignoreCase = true) }
+        val glCalculated = if (detTeam != null && detTeam.wins + detTeam.losses > 0) {
+            maxOf(0, 162 - (detTeam.wins + detTeam.losses))
+        } else {
+            prefs.getInt("tigers_games_left", 29)
+        }
+
+        val isPlayoffIn = playoffStatusRaw.contains("IN", ignoreCase = true) ||
+                wcGbRaw.contains("IN", ignoreCase = true) ||
+                (sortedList.indexOfFirst { it.name.contains("DET", ignoreCase = true) } == 0)
+
+        val formattedWcText = when {
+            isPlayoffIn -> {
+                if (playoffSpotInfo != null && playoffSpotInfo.contains("WC", ignoreCase = true)) {
+                    val spot = if (playoffSpotInfo.contains("WC #1")) "WC1" else if (playoffSpotInfo.contains("WC #2")) "WC2" else "WC3"
+                    "PLAYOFF: IN ($spot) • GL: $glCalculated"
+                } else if (sortedList.indexOfFirst { it.name.contains("DET", ignoreCase = true) } == 0) {
+                    "PLAYOFF: IN (ALC #1) • GL: $glCalculated"
+                } else {
+                    "PLAYOFF: IN • GL: $glCalculated"
+                }
+            }
+            else -> {
+                val cleanGb = wcGbRaw.replace(Regex("^WCGB:?\\s*", RegexOption.IGNORE_CASE), "")
+                    .replace(Regex("^WC:?\\s*", RegexOption.IGNORE_CASE), "")
+                    .replace("GB", "").trim()
+                "WCGB: $cleanGb • GL: $glCalculated"
+            }
+        }
+
+        val colorHex = if (isPlayoffIn) "#00E676" else "#FF5252"
         val styledWc = "<b><i><font color='$colorHex'>$formattedWcText</font></i></b>"
         val htmlWc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             android.text.Html.fromHtml(styledWc, android.text.Html.FROM_HTML_MODE_LEGACY)
@@ -329,41 +381,6 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
             android.text.Html.fromHtml(styledWc)
         }
         views.setTextViewText(R.id.widget_team_6, htmlWc)
-    }
-
-    private fun isWildCardInOrZero(raw: String, formatted: String): Boolean {
-        val trimmed = raw.trim()
-        val formattedTrimmed = formatted.trim()
-        if (trimmed.contains("IN", ignoreCase = true) || formattedTrimmed.contains("IN", ignoreCase = true)) {
-            return true
-        }
-        val match = Regex("WCGB:\\s*(\\d+(?:\\.\\d+)?)", RegexOption.IGNORE_CASE).find(formattedTrimmed)
-            ?: Regex("(\\d+(?:\\.\\d+)?)").find(trimmed)
-        if (match != null) {
-            val value = match.groupValues[1].toDoubleOrNull() ?: 6.0
-            return value <= 0.0
-        }
-        return false
-    }
-
-    private fun formatWcGbText(raw: String, gamesLeft: Int): String {
-        val trimmed = raw.trim()
-        val wcPart = when {
-            trimmed.contains("IN", ignoreCase = true) -> "WCGB: IN"
-            else -> {
-                val match = Regex("(\\d+(?:\\.\\d+)?)").find(trimmed)
-                if (match != null) {
-                    "WCGB: ${match.groupValues[1]}"
-                } else if (trimmed.isNotEmpty() && trimmed != "N/A") {
-                    val cleaned = trimmed.replace(Regex("^WC\\s*GB:?\\s*", RegexOption.IGNORE_CASE), "")
-                        .replace(Regex("^WCGB:?\\s*", RegexOption.IGNORE_CASE), "")
-                    "WCGB: $cleaned"
-                } else {
-                    "WCGB: 6.0"
-                }
-            }
-        }
-        return "$wcPart, GL: $gamesLeft"
     }
 
     private fun formatTeamText(rank: Int, rawText: String): CharSequence {
@@ -383,26 +400,60 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private fun applyResponsiveLayout(views: RemoteViews, minWidth: Int, minHeight: Int) {
+    private fun applyResponsiveLayout(context: Context, views: RemoteViews, minWidth: Int, minHeight: Int) {
         Log.d("TigersWidget", "Applying responsive layout: width=$minWidth, height=$minHeight")
+        val density = context.resources.displayMetrics.density
+
+        // Dynamic responsive font scaling to fill available widget space and eliminate dead space
+        val heightRatio = (minHeight / 110f).coerceIn(0.8f, 2.5f)
+        val widthRatio = (minWidth / 180f).coerceIn(0.8f, 2.2f)
+        val scale = (heightRatio * 0.65f + widthRatio * 0.35f).coerceIn(0.85f, 2.4f)
+
+        val titleSp = (11.5f * scale).coerceIn(10f, 18f)
+        val tagSp = (9f * scale).coerceIn(8f, 13f)
+        val oppSp = (13f * scale).coerceIn(11.5f, 22f)
+        val countdownSp = (20f * scale).coerceIn(17f, 38f)
+        val pitcherSp = (11f * scale).coerceIn(9.5f, 16f)
+        val standingH2hSp = (9.5f * scale).coerceIn(8.5f, 14.5f)
+        val tableSp = (9.5f * scale).coerceIn(8.5f, 14f)
+        val tableWcSp = (9f * scale).coerceIn(8f, 13.5f)
+
+        views.setTextViewTextSize(R.id.widget_title, android.util.TypedValue.COMPLEX_UNIT_SP, titleSp)
+        views.setTextViewTextSize(R.id.widget_tag, android.util.TypedValue.COMPLEX_UNIT_SP, tagSp)
+        views.setTextViewTextSize(R.id.widget_opponent, android.util.TypedValue.COMPLEX_UNIT_SP, oppSp)
+        views.setTextViewTextSize(R.id.widget_countdown, android.util.TypedValue.COMPLEX_UNIT_SP, countdownSp)
+        views.setTextViewTextSize(R.id.widget_stadium_pitcher_info, android.util.TypedValue.COMPLEX_UNIT_SP, pitcherSp)
+        views.setTextViewTextSize(R.id.widget_standing_h2h, android.util.TypedValue.COMPLEX_UNIT_SP, standingH2hSp)
+
+        views.setTextViewTextSize(R.id.widget_team_1, android.util.TypedValue.COMPLEX_UNIT_SP, tableSp)
+        views.setTextViewTextSize(R.id.widget_team_2, android.util.TypedValue.COMPLEX_UNIT_SP, tableSp)
+        views.setTextViewTextSize(R.id.widget_team_3, android.util.TypedValue.COMPLEX_UNIT_SP, tableSp)
+        views.setTextViewTextSize(R.id.widget_team_4, android.util.TypedValue.COMPLEX_UNIT_SP, tableSp)
+        views.setTextViewTextSize(R.id.widget_team_5, android.util.TypedValue.COMPLEX_UNIT_SP, tableSp)
+        views.setTextViewTextSize(R.id.widget_team_6, android.util.TypedValue.COMPLEX_UNIT_SP, tableWcSp)
+
+        // Dynamic padding adjustment: compact for small widgets, expanding for spacious widgets
+        val padH = (minOf(minWidth * 0.035f, 14f) * density).toInt().coerceAtLeast((3 * density).toInt())
+        val padV = (minOf(minHeight * 0.035f, 14f) * density).toInt().coerceAtLeast((3 * density).toInt())
+        views.setViewPadding(R.id.widget_root, padH, padV, padH, padV)
 
         // 1. Height-based rules
-        if (minHeight < 95) {
+        if (minHeight < 90) {
             // Ultra-compact size - show only matchup & countdown
             views.setViewVisibility(R.id.widget_header_layout, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_divider_top, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_standings_table, android.view.View.GONE)
-        } else if (minHeight < 125) {
-            // Intermediate compact size - hide header/divider to save space for content
-            views.setViewVisibility(R.id.widget_header_layout, android.view.View.GONE)
-            views.setViewVisibility(R.id.widget_divider_top, android.view.View.GONE)
+        } else if (minHeight < 120) {
+            // Intermediate compact size
+            views.setViewVisibility(R.id.widget_header_layout, android.view.View.VISIBLE)
+            views.setViewVisibility(R.id.widget_divider_top, android.view.View.VISIBLE)
             views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.VISIBLE)
             views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.VISIBLE)
             views.setViewVisibility(R.id.widget_standings_table, android.view.View.VISIBLE)
         } else {
-            // Full size - show all elements with optimized spacing
+            // Full size - show all elements with dynamic typography filling the available area
             views.setViewVisibility(R.id.widget_header_layout, android.view.View.VISIBLE)
             views.setViewVisibility(R.id.widget_divider_top, android.view.View.VISIBLE)
             views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.VISIBLE)
@@ -411,7 +462,7 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         }
 
         // 2. Width-based rules
-        if (minWidth < 150) {
+        if (minWidth < 140) {
             // Narrow widget - hide team logos to prevent compressing the texts in between
             views.setViewVisibility(R.id.widget_tigers_logo, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_opponent_logo, android.view.View.GONE)

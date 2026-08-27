@@ -809,9 +809,13 @@ fun StandingsAndRaceSection(viewModel: GameViewModel) {
         null
     }
 
-    val gamesBackDivDisplay = gamesBackDivValue ?: if (isGroundedLoading) "---" else "9.0"
-    val gamesBackWCDisplay = gamesBackWCValue ?: if (isGroundedLoading) "---" else "6.0"
-    val playoffStatusRaw = playoffStatusValue ?: if (isGroundedLoading) "---" else "OUT"
+    val prefDiv by viewModel.gamesBackDivision.collectAsStateWithLifecycle()
+    val prefWc by viewModel.gamesBackWildCard.collectAsStateWithLifecycle()
+    val prefPlayoff by viewModel.playoffStatus.collectAsStateWithLifecycle()
+
+    val gamesBackDivDisplay = gamesBackDivValue ?: if (prefDiv != "N/A") prefDiv else if (isGroundedLoading) "---" else "8.0"
+    val gamesBackWCDisplay = gamesBackWCValue ?: if (prefWc != "N/A") prefWc else if (isGroundedLoading) "---" else "5.5"
+    val playoffStatusRaw = playoffStatusValue ?: if (prefPlayoff != "UNKNOWN") prefPlayoff else if (isGroundedLoading) "---" else "OUT"
     val playoffStatusDisplay = playoffStatusRaw.uppercase()
 
     Column(

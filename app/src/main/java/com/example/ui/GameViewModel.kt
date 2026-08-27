@@ -172,12 +172,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 _useSimulatedMode.value = forceSimulated
                 repository.refreshGames(getApplication(), forceSimulated = forceSimulated)
+                _gamesBackDivision.value = prefs.getString("games_back_division", "N/A") ?: "N/A"
+                _gamesBackWildCard.value = prefs.getString("games_back_wild_card", "N/A") ?: "N/A"
+                _playoffStatus.value = prefs.getString("playoff_status", "UNKNOWN") ?: "UNKNOWN"
             } catch (e: Exception) {
                 Log.e("GameViewModel", "Error refreshing data: ${e.message}")
                 _errorMessage.value = "Failed to update live scores. Showing offline/simulated data."
                 // Attempt fallback refresh
                 repository.refreshGames(getApplication(), forceSimulated = true)
                 _useSimulatedMode.value = true
+                _gamesBackDivision.value = prefs.getString("games_back_division", "N/A") ?: "N/A"
+                _gamesBackWildCard.value = prefs.getString("games_back_wild_card", "N/A") ?: "N/A"
+                _playoffStatus.value = prefs.getString("playoff_status", "UNKNOWN") ?: "UNKNOWN"
             } finally {
                 _isRefreshing.value = false
             }
