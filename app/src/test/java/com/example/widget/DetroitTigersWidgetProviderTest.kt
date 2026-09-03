@@ -40,6 +40,14 @@ class DetroitTigersWidgetProviderTest {
     }
 
     @Test
+    fun testApplyResponsiveLayout_Pixel10FoldInnerScreenStandard2RowHeight() {
+        val views = RemoteViews(context.packageName, R.layout.detroit_tigers_widget_layout)
+        // Pixel 10 Fold inner screen standard 2-row height (e.g. minWidth 380dp, minHeight 115dp)
+        provider.applyResponsiveLayout(views, minWidth = 380, minHeight = 115, context = context)
+        assertNotNull(views)
+    }
+
+    @Test
     fun testApplyResponsiveLayout_CompactDimensions() {
         val views = RemoteViews(context.packageName, R.layout.detroit_tigers_widget_layout)
         provider.applyResponsiveLayout(views, minWidth = 120, minHeight = 90, context = context)

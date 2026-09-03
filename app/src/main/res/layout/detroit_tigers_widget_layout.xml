@@ -64,9 +64,9 @@
         <!-- Away Team Logo (Left) -->
         <ImageView
             android:id="@+id/widget_away_logo"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_marginRight="6dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginRight="8dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_tigers_logo" />
 
@@ -106,24 +106,26 @@
         <!-- Home Team Logo (Right) -->
         <ImageView
             android:id="@+id/widget_home_logo"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_marginLeft="6dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginLeft="8dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_baseball_placeholder" />
     </LinearLayout>
 
-    <!-- Pitcher Last Game Info (Centered) -->
+    <!-- Pitcher Last Game Info (Single line to save space) -->
     <TextView
         android:id="@+id/widget_stadium_pitcher_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="*Starting Pitcher: Tarik Skubal (L)\n(Last Game: 7.0 IP, 9 SO)"
+        android:text="SP: Tarik Skubal (L) • (LG: 7.0 IP, 9 SO)"
         android:textColor="#FFFFFF"
         android:textSize="11sp"
         android:textStyle="bold"
         android:gravity="center"
-        android:maxLines="2"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:ellipsize="end"
         android:layout_marginBottom="2dp" />
 
     <!-- Tigers Standing & head-to-head info (Centered) -->
