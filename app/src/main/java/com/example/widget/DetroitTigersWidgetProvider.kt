@@ -659,125 +659,78 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
 
     fun applyResponsiveLayout(views: RemoteViews, minWidth: Int, minHeight: Int, context: Context? = null) {
         Log.d("TigersWidget", "Applying responsive layout: width=$minWidth, height=$minHeight")
-        val density = context?.resources?.displayMetrics?.density ?: 2f
 
-        // 1. Height-based visibility rules
-        if (minHeight < 75) {
-            // Ultra-compact size - show only matchup & countdown
-            views.setViewVisibility(R.id.widget_header_layout, android.view.View.GONE)
-            views.setViewVisibility(R.id.widget_divider_top, android.view.View.GONE)
-            views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.GONE)
-            views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.GONE)
-            views.setViewVisibility(R.id.widget_standings_table, android.view.View.GONE)
-        } else if (minHeight < 90) {
-            // Compact size (e.g. 1.5 row height < 90dp)
-            views.setViewVisibility(R.id.widget_header_layout, android.view.View.VISIBLE)
-            views.setViewVisibility(R.id.widget_divider_top, android.view.View.VISIBLE)
-            views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.GONE)
-            views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.VISIBLE)
-            views.setViewVisibility(R.id.widget_standings_table, android.view.View.GONE)
-        } else {
-            // Regular / Full size (2-row or taller: 3x2, 4x2, 5x2, 3x3, etc. with minHeight >= 90dp)
-            // Displays all elements: Header, Logos, Matchup, Countdown, SP, Standings H2H, and Standings Table
-            views.setViewVisibility(R.id.widget_header_layout, android.view.View.VISIBLE)
-            views.setViewVisibility(R.id.widget_divider_top, android.view.View.VISIBLE)
-            views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.VISIBLE)
-            views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.VISIBLE)
-            views.setViewVisibility(R.id.widget_standings_table, android.view.View.VISIBLE)
+        // ── 1. Visibility based purely on available height ────────────────────────────────────
+        when {
+            minHeight < 72 -> {
+                // Single row — just show matchup and countdown, nothing else
+                views.setViewVisibility(R.id.widget_header_layout, android.view.View.GONE)
+                views.setViewVisibility(R.id.widget_divider_top, android.view.View.GONE)
+                views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.GONE)
+                views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.GONE)
+                views.setViewVisibility(R.id.widget_standings_table, android.view.View.GONE)
+            }
+            minHeight < 90 -> {
+                // Narrow 2-row: show header + matchup + H2H only
+                views.setViewVisibility(R.id.widget_header_layout, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_divider_top, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.GONE)
+                views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_standings_table, android.view.View.GONE)
+            }
+            else -> {
+                // Full 3x2+ layout — everything visible, weights handle the sizing
+                views.setViewVisibility(R.id.widget_header_layout, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_divider_top, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_standings_table, android.view.View.VISIBLE)
+            }
         }
 
-        // 2. Width-based visibility rules
-        if (minWidth < 140) {
-            // Narrow widget - hide team logos to prevent compressing text in between
-            views.setViewVisibility(R.id.widget_away_logo, android.view.View.GONE)
-            views.setViewVisibility(R.id.widget_home_logo, android.view.View.GONE)
-        } else {
-            views.setViewVisibility(R.id.widget_away_logo, android.view.View.VISIBLE)
-            views.setViewVisibility(R.id.widget_home_logo, android.view.View.VISIBLE)
-        }
+        // ── 2. Logo visibility based on available width ───────────────────────────────────────
+        val showLogos = minWidth >= 140
+        views.setViewVisibility(R.id.widget_away_logo, if (showLogos) android.view.View.VISIBLE else android.view.View.GONE)
+        views.setViewVisibility(R.id.widget_home_logo, if (showLogos) android.view.View.VISIBLE else android.view.View.GONE)
 
-        // 3. Dynamic Text Sizing for Foldable Inner Screen & Phones
-        val isTall = minHeight >= 140
-        val isWide = minWidth >= 250
-        val isCompact = minWidth < 140 || minHeight < 90
+        // ── 3. Proportional font sizing ────────────────────────────────────────────────────────
+        // Font sizes scale from available height so they ALWAYS fill the space without overflow.
+        // Coefficients tuned so text fills each weight-allocated row comfortably.
+        val h = minHeight.toFloat()
 
-        val titleSp: Float
-        val tagSp: Float
-        val opponentSp: Float
-        val countdownSp: Float
-        val pitcherSp: Float
-        val standingH2hSp: Float
-        val teamSp: Float
+        // Header row (~14% of height in weights)
+        val titleSp   = (h * 0.115f).coerceIn(8f, 16f)
+        val tagSp     = (h * 0.095f).coerceIn(7f, 13f)
 
-        if (isCompact) {
-            // Compact screen / small phone widget (e.g. 2x2 or narrow)
-            titleSp = 10f
-            tagSp = 8f
-            opponentSp = 11.5f
-            countdownSp = 16f
-            pitcherSp = 9f
-            standingH2hSp = 8f
-            teamSp = 8f
-        } else if (isTall) {
-            // Tall / Expanded 3+ row widget (minHeight >= 140dp)
-            titleSp = 14f
-            tagSp = 10f
-            opponentSp = 16f
-            countdownSp = 24f
-            pitcherSp = 12f
-            standingH2hSp = 10.5f
-            teamSp = 10.5f
-        } else if (isWide) {
-            // Foldable Inner Display 2-row height (Pixel 10 Fold open screen 3x2, 4x2, 5x2):
-            // Width is expansive (>= 250dp). We keep vertical height strictly bounded to <= 105dp
-            // so that the standings table (last line) NEVER disappears!
-            titleSp = 11f
-            tagSp = 8.5f
-            opponentSp = 12.5f
-            countdownSp = 17.5f
-            pitcherSp = 10f
-            standingH2hSp = 8.5f
-            teamSp = 8.5f
-        } else {
-            // Standard phone display 2-row height (Pixel 10 Fold front screen 3x2):
-            // Fits within 105dp with comfortable margins and no wasted space.
-            titleSp = 10.5f
-            tagSp = 8f
-            opponentSp = 12f
-            countdownSp = 17f
-            pitcherSp = 9.5f
-            standingH2hSp = 8.5f
-            teamSp = 8.5f
-        }
+        // Matchup row (~36% of height in weights)
+        val opponentSp  = (h * 0.115f).coerceIn(9f, 18f)
+        val countdownSp = (h * 0.175f).coerceIn(13f, 30f)
 
-        // Apply text sizes to RemoteViews
-        views.setTextViewTextSize(R.id.widget_title, android.util.TypedValue.COMPLEX_UNIT_SP, titleSp)
-        views.setTextViewTextSize(R.id.widget_tag, android.util.TypedValue.COMPLEX_UNIT_SP, tagSp)
+        // SP + H2H rows (~12% + 11% of height)
+        val pitcherSp    = (h * 0.095f).coerceIn(7f, 14f)
+        val standingH2hSp = (h * 0.085f).coerceIn(6.5f, 13f)
+
+        // Standings rows (~24% of height, 2 lines split equally)
+        val teamSp = (h * 0.085f).coerceIn(6.5f, 12f)
+
+        views.setTextViewTextSize(R.id.widget_title,  android.util.TypedValue.COMPLEX_UNIT_SP, titleSp)
+        views.setTextViewTextSize(R.id.widget_tag,    android.util.TypedValue.COMPLEX_UNIT_SP, tagSp)
         views.setTextViewTextSize(R.id.widget_theme_toggle, android.util.TypedValue.COMPLEX_UNIT_SP, tagSp)
-        views.setTextViewTextSize(R.id.widget_opponent, android.util.TypedValue.COMPLEX_UNIT_SP, opponentSp)
+        views.setTextViewTextSize(R.id.widget_opponent,  android.util.TypedValue.COMPLEX_UNIT_SP, opponentSp)
         views.setTextViewTextSize(R.id.widget_countdown, android.util.TypedValue.COMPLEX_UNIT_SP, countdownSp)
         views.setTextViewTextSize(R.id.widget_stadium_pitcher_info, android.util.TypedValue.COMPLEX_UNIT_SP, pitcherSp)
-        views.setTextViewTextSize(R.id.widget_standing_h2h, android.util.TypedValue.COMPLEX_UNIT_SP, standingH2hSp)
+        views.setTextViewTextSize(R.id.widget_standing_h2h,         android.util.TypedValue.COMPLEX_UNIT_SP, standingH2hSp)
+        views.setTextViewTextSize(R.id.widget_team_1,  android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
+        views.setTextViewTextSize(R.id.widget_team_2,  android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
+        views.setTextViewTextSize(R.id.widget_team_3,  android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
+        views.setTextViewTextSize(R.id.widget_team_4,  android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
+        views.setTextViewTextSize(R.id.widget_team_5,  android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
+        views.setTextViewTextSize(R.id.widget_team_6,  android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
 
-        // Ensure ALL 6 standings team texts share exact same text size for baseline alignment across columns
-        views.setTextViewTextSize(R.id.widget_team_1, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
-        views.setTextViewTextSize(R.id.widget_team_2, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
-        views.setTextViewTextSize(R.id.widget_team_3, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
-        views.setTextViewTextSize(R.id.widget_team_4, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
-        views.setTextViewTextSize(R.id.widget_team_5, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
-        views.setTextViewTextSize(R.id.widget_team_6, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
-
-        // Dynamic padding adjustment:
-        val padV = if (isTall) {
-            (minOf(minHeight * 0.03f, 8f) * density).toInt()
-        } else {
-            (1.5f * density).toInt()
-        }
-        val padH = if (isWide) {
-            (minOf(minWidth * 0.02f, 10f) * density).toInt().coerceAtLeast((4 * density).toInt())
-        } else {
-            (2.5f * density).toInt()
-        }
+        // ── 4. Proportional padding (scales with widget size) ────────────────────────────────
+        val density = context?.resources?.displayMetrics?.density ?: 2f
+        val padH = ((minWidth  * 0.015f).coerceIn(3f, 10f) * density).toInt()
+        val padV = ((minHeight * 0.018f).coerceIn(2f,  8f) * density).toInt()
         views.setViewPadding(R.id.widget_root, padH, padV, padH, padV)
     }
 
