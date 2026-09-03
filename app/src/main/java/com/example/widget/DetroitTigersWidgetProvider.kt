@@ -123,16 +123,17 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
             appWidgetIds.forEach { widgetId ->
                 val views = RemoteViews(context.packageName, R.layout.detroit_tigers_widget_layout)
                 
-                if (nextGame != null) {
-                    bindGameData(context, views, nextGame)
-                } else {
-                    bindEmptyState(context, views)
-                }
-
                 // Query current widget options for responsive sizing
                 val options = appWidgetManager.getAppWidgetOptions(widgetId)
                 val minWidth = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) ?: 180
                 val minHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) ?: 110
+
+                if (nextGame != null) {
+                    bindGameData(context, views, nextGame, minWidth)
+                } else {
+                    bindEmptyState(context, views)
+                }
+
                 applyResponsiveLayout(context, views, minWidth, minHeight)
 
                 // Click pending intent to open main app
@@ -161,7 +162,7 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private suspend fun bindGameData(context: Context, views: RemoteViews, game: UpcomingGame) {
+    private suspend fun bindGameData(context: Context, views: RemoteViews, game: UpcomingGame, minWidth: Int = 180) {
         val isHome = game.isHomeGame
         val prefix = if (isHome) "vs." else "at"
         views.setTextViewText(R.id.widget_opponent, "$prefix ${game.opponentName}")
@@ -187,10 +188,12 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         // Probable starting pitcher and their last game info directly underneath
         val cleanName = cleanPitcherName(game.pitcherName)
         val handSuffix = if (game.pitcherHand.isNotEmpty()) " (${game.pitcherHand})" else ""
+        val separator = if (minWidth >= 220) " • " else "<br/>"
         val rawPitcherHtml = String.format(
-            "*Starting Pitcher: <b><font color='#FA4616'>%s%s</font></b><br/><font color='#98A6B8'>(Last Game: %.1f IP, %d SO)</font>",
+            "*Starting Pitcher: <b><font color='#FA4616'>%s%s</font></b>%s<font color='#98A6B8'>(Last Game: %.1f IP, %d SO)</font>",
             cleanName,
             handSuffix,
+            separator,
             game.pitcherLastIp,
             game.pitcherLastSo
         )
@@ -410,14 +413,14 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         val density = context?.resources?.displayMetrics?.density ?: 2f
 
         // 1. Height-based visibility rules
-        if (minHeight < 90) {
+        if (minHeight < 85) {
             // Ultra-compact size - show only matchup & countdown
             views.setViewVisibility(R.id.widget_header_layout, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_divider_top, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_standings_table, android.view.View.GONE)
-        } else if (minHeight < 110) {
+        } else if (minHeight < 105) {
             // Compact size - hide standings table to prevent vertical overflow/clipping
             views.setViewVisibility(R.id.widget_header_layout, android.view.View.VISIBLE)
             views.setViewVisibility(R.id.widget_divider_top, android.view.View.VISIBLE)
@@ -443,7 +446,11 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
             views.setViewVisibility(R.id.widget_opponent_logo, android.view.View.VISIBLE)
         }
 
-        // 3. Dynamic Text Sizing for Foldable Inner Screen (Pixel Fold / Pixel 10 Fold Pro / sw600dp / wide widget)
+        // 3. Dynamic Text Sizing for Foldable Inner Screen & Phones
+        val isTall = minHeight >= 160
+        val isWide = minWidth >= 250
+        val isCompact = minWidth < 140 || minHeight < 105
+
         val titleSp: Float
         val tagSp: Float
         val opponentSp: Float
@@ -452,33 +459,44 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         val standingH2hSp: Float
         val teamSp: Float
 
-        if (minWidth < 140 || minHeight < 110) {
+        if (isCompact) {
             // Compact screen
             titleSp = 11f
             tagSp = 9f
             opponentSp = 13f
             countdownSp = 18f
+            pitcherSp = 10.5f
+            standingH2hSp = 9f
+            teamSp = 9f
+        } else if (isTall) {
+            // Tall / Expanded 3+ row widget (minHeight >= 160dp)
+            titleSp = 15f
+            tagSp = 11f
+            opponentSp = 18f
+            countdownSp = 26f
+            pitcherSp = 13f
+            standingH2hSp = 11.5f
+            teamSp = 11f
+        } else if (isWide) {
+            // Foldable Inner Display (Pixel 10 Fold inner screen at standard 2-row height):
+            // Width is expansive (>= 250dp), but height is standard 2 rows (~110-130dp).
+            // Font sizes are kept disciplined vertically so the last line of information NEVER clips.
+            titleSp = 12f
+            tagSp = 9f
+            opponentSp = 14f
+            countdownSp = 20f
             pitcherSp = 11f
             standingH2hSp = 9.5f
-            teamSp = 9f
-        } else if (minWidth >= 250 || minHeight >= 150) {
-            // Foldable Inner Display / Large Screen (e.g. Pixel Fold / Pixel 10 Fold Pro inner screen)
-            titleSp = 16f
-            tagSp = 12f
-            opponentSp = 19f
-            countdownSp = 28f
-            pitcherSp = 14f
-            standingH2hSp = 12f
-            teamSp = 12f
+            teamSp = 9.5f
         } else {
-            // Standard phone display
-            titleSp = 13f
-            tagSp = 10f
-            opponentSp = 15f
-            countdownSp = 22f
-            pitcherSp = 12f
-            standingH2hSp = 10f
-            teamSp = 10f
+            // Standard phone display (front screen)
+            titleSp = 12f
+            tagSp = 9f
+            opponentSp = 14f
+            countdownSp = 20f
+            pitcherSp = 11f
+            standingH2hSp = 9.5f
+            teamSp = 9.5f
         }
 
         // Apply text sizes to RemoteViews
@@ -497,9 +515,18 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         views.setTextViewTextSize(R.id.widget_team_5, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
         views.setTextViewTextSize(R.id.widget_team_6, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
 
-        // Dynamic padding adjustment: compact for small widgets, expanding for spacious widgets
-        val padH = (minOf(minWidth * 0.035f, 14f) * density).toInt().coerceAtLeast((3 * density).toInt())
-        val padV = (minOf(minHeight * 0.035f, 14f) * density).toInt().coerceAtLeast((3 * density).toInt())
+        // Dynamic padding adjustment:
+        // Keep vertical padding minimal on 2-row heights to avoid eating vertical space from the bottom line
+        val padV = if (isTall) {
+            (5f * density).toInt()
+        } else {
+            (2f * density).toInt() // ~2dp padding top/bottom leaves maximum room for all lines
+        }
+        val padH = if (isWide) {
+            (minOf(minWidth * 0.035f, 14f) * density).toInt().coerceAtLeast((6 * density).toInt())
+        } else {
+            (3 * density).toInt()
+        }
         views.setViewPadding(R.id.widget_root, padH, padV, padH, padV)
     }
 
