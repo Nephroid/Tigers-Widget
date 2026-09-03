@@ -1,14 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material You dynamic wallpaper colors for Android 12+ (Dark Mode) -->
-    <color name="widget_my_bg">@android:color/system_neutral1_900</color>
-    <color name="widget_my_bg_stroke">@android:color/system_neutral2_700</color>
-    <color name="widget_my_tag_bg">@android:color/system_accent2_800</color>
-    <color name="widget_my_tag_text">@android:color/system_accent1_100</color>
-    <color name="widget_my_title">@android:color/system_accent1_200</color>
-    <color name="widget_my_countdown">@android:color/system_accent1_200</color>
-    <color name="widget_my_text_primary">@android:color/system_neutral1_100</color>
-    <color name="widget_my_text_secondary">@android:color/system_neutral2_200</color>
-    <color name="widget_my_accent">@android:color/system_accent1_300</color>
-    <color name="widget_my_divider">@android:color/system_neutral2_700</color>
+    <!-- 4. Material You - Dynamic Primary (Dark Mode) -->
+    <color name="widget_my1_bg">@android:color/system_neutral1_900</color>
+    <color name="widget_my1_bg_stroke">@android:color/system_neutral2_700</color>
+    <color name="widget_my1_tag_bg">@android:color/system_accent2_800</color>
+    <color name="widget_my1_tag_text">@android:color/system_accent1_100</color>
+    <color name="widget_my1_title">@android:color/system_accent1_200</color>
+    <color name="widget_my1_countdown">@android:color/system_accent1_200</color>
+    <color name="widget_my1_opponent">@android:color/system_neutral1_100</color>
+    <color name="widget_my1_pitcher_sub">@android:color/system_neutral2_200</color>
+    <color name="widget_my1_standing">@android:color/system_accent1_300</color>
+    <color name="widget_my1_team">@android:color/system_neutral2_200</color>
+    <color name="widget_my1_team_det">@android:color/system_accent1_300</color>
+    <color name="widget_my1_wcgb">@android:color/system_accent1_200</color>
+    <color name="widget_my1_divider">@android:color/system_neutral2_700</color>
+
+    <!-- 5. Material You - Vibrant Tertiary (Dark Mode) -->
+    <color name="widget_my2_bg">@android:color/system_neutral2_900</color>
+    <color name="widget_my2_bg_stroke">@android:color/system_accent3_700</color>
+    <color name="widget_my2_tag_bg">@android:color/system_accent3_800</color>
+    <color name="widget_my2_tag_text">@android:color/system_accent3_100</color>
+    <color name="widget_my2_title">@android:color/system_accent3_200</color>
+    <color name="widget_my2_countdown">@android:color/system_accent3_200</color>
+    <color name="widget_my2_opponent">@android:color/system_neutral1_100</color>
+    <color name="widget_my2_pitcher_sub">@android:color/system_neutral2_200</color>
+    <color name="widget_my2_standing">@android:color/system_accent3_300</color>
+    <color name="widget_my2_team">@android:color/system_neutral2_200</color>
+    <color name="widget_my2_team_det">@android:color/system_accent3_200</color>
+    <color name="widget_my2_wcgb">@android:color/system_accent3_100</color>
+    <color name="widget_my2_divider">@android:color/system_accent3_700</color>
+
+    <!-- 6. Material You - Tonal Tint (Dark Mode) -->
+    <color name="widget_my3_bg">@android:color/system_accent2_900</color>
+    <color name="widget_my3_bg_stroke">@android:color/system_accent1_700</color>
+    <color name="widget_my3_tag_bg">@android:color/system_accent1_800</color>
+    <color name="widget_my3_tag_text">@android:color/system_accent1_100</color>
+    <color name="widget_my3_title">@android:color/system_accent1_200</color>
+    <color name="widget_my3_countdown">@android:color/system_accent1_100</color>
+    <color name="widget_my3_opponent">@android:color/system_neutral1_50</color>
+    <color name="widget_my3_pitcher_sub">@android:color/system_accent2_200</color>
+    <color name="widget_my3_standing">@android:color/system_accent2_100</color>
+    <color name="widget_my3_team">@android:color/system_neutral2_100</color>
+    <color name="widget_my3_team_det">@android:color/system_accent1_200</color>
+    <color name="widget_my3_wcgb">@android:color/system_accent2_100</color>
+    <color name="widget_my3_divider">@android:color/system_accent1_700</color>
 </resources>

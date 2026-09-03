@@ -1441,7 +1441,20 @@ fun getTeamAbbreviation(teamName: String): String {
 @Composable
 fun WidgetThemingCard(context: Context) {
     val prefs = remember { context.getSharedPreferences("TigersWidgetPrefs", Context.MODE_PRIVATE) }
-    var isMaterialYou by remember { mutableStateOf(prefs.getBoolean("widget_material_you_enabled", false)) }
+    var currentThemeIndex by remember {
+        mutableStateOf(
+            prefs.getInt("widget_theme_index", if (prefs.getBoolean("widget_material_you_enabled", false)) 3 else 0)
+        )
+    }
+
+    val themes = listOf(
+        Triple("Classic Navy", "Deep Navy & Tigers Orange", Color(0xFF0C2340) to Color(0xFFFA4616)),
+        Triple("Motor City", "Charcoal Slate & Neon Orange", Color(0xFF121417) to Color(0xFFFF5722)),
+        Triple("Heritage 1984", "Vintage Cream, Midnight Navy & Gold", Color(0xFF061325) to Color(0xFFF5A623)),
+        Triple("MY Dynamic", "Wallpaper Primary dynamic palette", Color(0xFF1B365D) to Color(0xFF81C784)),
+        Triple("MY Vibrant", "Wallpaper Tertiary pop & Accent2", Color(0xFF2B1B4D) to Color(0xFFBA68C8)),
+        Triple("MY Tonal", "Wallpaper Tonal tinted container", Color(0xFF102830) to Color(0xFF4DD0E1))
+    )
 
     Card(
         shape = RoundedCornerShape(18.dp),
@@ -1450,24 +1463,24 @@ fun WidgetThemingCard(context: Context) {
             .fillMaxWidth()
             .border(1.dp, Color(0xFF1B365D), RoundedCornerShape(18.dp))
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    Text(text = "🎨", fontSize = 16.sp)
                     Text(
-                        text = "🎨",
-                        fontSize = 16.sp
-                    )
-                    Text(
-                        text = "Widget Theme",
+                        text = "Widget Theme Palette",
                         style = TextStyle(
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
@@ -1475,38 +1488,189 @@ fun WidgetThemingCard(context: Context) {
                         )
                     )
                 }
-                Spacer(modifier = Modifier.height(3.dp))
-                Text(
-                    text = if (isMaterialYou) "Material You (Dynamic Colors)" else "Detroit Tigers Classic (Navy & Orange)",
-                    style = TextStyle(
-                        color = if (isMaterialYou) Color(0xFF81C784) else Color(0xFFFF823C),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF1B365D).copy(alpha = 0.6f),
+                    modifier = Modifier.clickable {
+                        val next = (currentThemeIndex + 1) % themes.size
+                        currentThemeIndex = next
+                        prefs.edit()
+                            .putInt("widget_theme_index", next)
+                            .putBoolean("widget_material_you_enabled", next >= 3)
+                            .apply()
+                        DetroitTigersWidgetProvider.triggerUpdate(context)
+                    }
+                ) {
+                    Text(
+                        text = "Cycle ↻",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        style = TextStyle(
+                            color = Color(0xFFFF823C),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     )
+                }
+            }
+
+            Text(
+                text = "Tap 🎨 directly on the widget to cycle anytime, or select a palette below:",
+                style = TextStyle(
+                    color = Color.White.copy(alpha = 0.5f),
+                    fontSize = 11.sp
                 )
-                Text(
-                    text = "Tap 🎨 directly on the widget or toggle here",
-                    style = TextStyle(
-                        color = Color.White.copy(alpha = 0.45f),
-                        fontSize = 10.5.sp
-                    )
+            )
+
+            // Section 1: Tigers Brand Themes
+            Text(
+                text = "DETROIT TIGERS PALETTES",
+                style = TextStyle(
+                    color = Color(0xFFFF823C),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
+                )
+            )
+            themes.take(3).forEachIndexed { idx, triple ->
+                val (name, desc, colors) = triple
+                val isSelected = currentThemeIndex == idx
+                ThemeOptionRow(
+                    name = name,
+                    desc = desc,
+                    primaryColor = colors.first,
+                    accentColor = colors.second,
+                    isSelected = isSelected,
+                    onClick = {
+                        currentThemeIndex = idx
+                        prefs.edit()
+                            .putInt("widget_theme_index", idx)
+                            .putBoolean("widget_material_you_enabled", false)
+                            .apply()
+                        DetroitTigersWidgetProvider.triggerUpdate(context)
+                    }
                 )
             }
 
-            Switch(
-                checked = isMaterialYou,
-                onCheckedChange = { checked ->
-                    isMaterialYou = checked
-                    prefs.edit().putBoolean("widget_material_you_enabled", checked).apply()
-                    DetroitTigersWidgetProvider.triggerUpdate(context)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = Color(0xFFFA4616),
-                    uncheckedThumbColor = Color.White.copy(alpha = 0.6f),
-                    uncheckedTrackColor = Color(0xFF1B365D)
+            Spacer(modifier = Modifier.height(2.dp))
+
+            // Section 2: Material You Themes
+            Text(
+                text = "MATERIAL YOU PALETTES (WALLPAPER DYNAMIC)",
+                style = TextStyle(
+                    color = Color(0xFF81C784),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
                 )
             )
+            themes.drop(3).forEachIndexed { dropIdx, triple ->
+                val (name, desc, colors) = triple
+                val idx = dropIdx + 3
+                val isSelected = currentThemeIndex == idx
+                ThemeOptionRow(
+                    name = name,
+                    desc = desc,
+                    primaryColor = colors.first,
+                    accentColor = colors.second,
+                    isSelected = isSelected,
+                    onClick = {
+                        currentThemeIndex = idx
+                        prefs.edit()
+                            .putInt("widget_theme_index", idx)
+                            .putBoolean("widget_material_you_enabled", true)
+                            .apply()
+                        DetroitTigersWidgetProvider.triggerUpdate(context)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeOptionRow(
+    name: String,
+    desc: String,
+    primaryColor: Color,
+    accentColor: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) Color(0xFF1B365D).copy(alpha = 0.5f) else Color(0xFF081220),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = if (isSelected) Color(0xFFFA4616) else Color(0xFF1B365D).copy(alpha = 0.35f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Dual Color Preview Dots
+                Box(contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .background(primaryColor, CircleShape)
+                            .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(accentColor, CircleShape)
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = name,
+                        style = TextStyle(
+                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.85f),
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 12.5.sp
+                        )
+                    )
+                    Text(
+                        text = desc,
+                        style = TextStyle(
+                            color = Color.White.copy(alpha = 0.45f),
+                            fontSize = 10.sp
+                        )
+                    )
+                }
+            }
+
+            if (isSelected) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = Color(0xFFFA4616).copy(alpha = 0.2f),
+                    modifier = Modifier.border(1.dp, Color(0xFFFA4616), RoundedCornerShape(6.dp))
+                ) {
+                    Text(
+                        text = "ACTIVE",
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = TextStyle(
+                            color = Color(0xFFFF823C),
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+            }
         }
     }
 }

@@ -8,7 +8,7 @@
     android:gravity="center"
     android:clipToPadding="false"
     android:clipChildren="false"
-    android:padding="3dp">
+    android:padding="2dp">
 
     <!-- Header Row (Centered) -->
     <LinearLayout
@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_marginBottom="2dp">
+        android:layout_marginBottom="1dp">
 
         <TextView
             android:id="@+id/widget_title"
@@ -28,6 +28,7 @@
             android:textSize="11.5sp"
             android:textStyle="bold"
             android:letterSpacing="0.04"
+            android:includeFontPadding="false"
             android:layout_marginRight="6dp" />
 
         <TextView
@@ -41,8 +42,9 @@
             android:paddingBottom="1dp"
             android:text="NEXT GAME"
             android:textColor="#FFFFFF"
-            android:textSize="9sp"
-            android:textStyle="bold" />
+            android:textSize="8.5sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false" />
 
         <TextView
             android:id="@+id/widget_theme_toggle"
@@ -56,8 +58,9 @@
             android:layout_marginLeft="6dp"
             android:text="🎨 THEME"
             android:textColor="#FA4616"
-            android:textSize="9sp"
-            android:textStyle="bold" />
+            android:textSize="8.5sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false" />
     </LinearLayout>
 
     <FrameLayout
@@ -65,7 +68,7 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#1B365D"
-        android:layout_marginBottom="2dp" />
+        android:layout_marginBottom="1dp" />
 
     <!-- Matchup Section with Logos (Centered) -->
     <LinearLayout
@@ -74,13 +77,13 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_marginBottom="2dp">
+        android:layout_marginBottom="1dp">
 
         <!-- Away Team Logo (Left) -->
         <ImageView
             android:id="@+id/widget_away_logo"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
             android:layout_marginRight="8dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_tigers_logo" />
@@ -100,10 +103,11 @@
                 android:layout_height="wrap_content"
                 android:text="vs. Guardians"
                 android:textColor="#FFFFFF"
-                android:textSize="13sp"
+                android:textSize="12.5sp"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:maxLines="1" />
+                android:maxLines="1"
+                android:includeFontPadding="false" />
 
             <!-- Countdown Timer -->
             <TextView
@@ -112,17 +116,18 @@
                 android:layout_height="wrap_content"
                 android:text="02h 45m"
                 android:textColor="#FA4616"
-                android:textSize="20sp"
+                android:textSize="17sp"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:maxLines="1" />
+                android:maxLines="1"
+                android:includeFontPadding="false" />
         </LinearLayout>
 
         <!-- Home Team Logo (Right) -->
         <ImageView
             android:id="@+id/widget_home_logo"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
             android:layout_marginLeft="8dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_baseball_placeholder" />
@@ -135,13 +140,14 @@
         android:layout_height="wrap_content"
         android:text="SP: Tarik Skubal (L) • (LG: 7.0 IP, 9 SO)"
         android:textColor="#FFFFFF"
-        android:textSize="11sp"
+        android:textSize="10sp"
         android:textStyle="bold"
         android:gravity="center"
         android:maxLines="1"
         android:singleLine="true"
         android:ellipsize="end"
-        android:layout_marginBottom="2dp" />
+        android:includeFontPadding="false"
+        android:layout_marginBottom="1dp" />
 
     <!-- Tigers Standing & head-to-head info (Centered) -->
     <TextView
@@ -150,11 +156,12 @@
         android:layout_height="wrap_content"
         android:text="2nd in AL Central • 5th in AL • Record: 4-3 vs CLE"
         android:textColor="#FFC107"
-        android:textSize="9.5sp"
+        android:textSize="8.5sp"
         android:textStyle="bold"
         android:gravity="center"
         android:maxLines="1"
-        android:layout_marginBottom="2dp" />
+        android:includeFontPadding="false"
+        android:layout_marginBottom="1dp" />
 
     <!-- AL Central Standings Layout: 3 columns (1,2 in col 1; 3,4 in col 2; 5 in col 3) -->
     <LinearLayout
@@ -178,10 +185,11 @@
                 android:layout_height="wrap_content"
                 android:text="1. CLE: 58-37"
                 android:textColor="#D0D8E4"
-                android:textSize="9.5sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:maxLines="1"
+                android:includeFontPadding="false"
                 android:paddingBottom="1dp" />
             <TextView
                 android:id="@+id/widget_team_2"
@@ -189,10 +197,11 @@
                 android:layout_height="wrap_content"
                 android:text="2. MIN: 53-41"
                 android:textColor="#D0D8E4"
-                android:textSize="9.5sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:maxLines="1" />
+                android:maxLines="1"
+                android:includeFontPadding="false" />
         </LinearLayout>
 
         <!-- Column 2: Teams 3 & 4 -->
@@ -207,10 +216,11 @@
                 android:layout_height="wrap_content"
                 android:text="3. KC: 52-43"
                 android:textColor="#D0D8E4"
-                android:textSize="9.5sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:maxLines="1"
+                android:includeFontPadding="false"
                 android:paddingBottom="1dp" />
             <TextView
                 android:id="@+id/widget_team_4"
@@ -218,10 +228,11 @@
                 android:layout_height="wrap_content"
                 android:text="4. DET: 47-53"
                 android:textColor="#FFC107"
-                android:textSize="9.5sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:maxLines="1" />
+                android:maxLines="1"
+                android:includeFontPadding="false" />
         </LinearLayout>
 
         <!-- Column 3: Team 5 & WCGB -->
@@ -236,10 +247,11 @@
                 android:layout_height="wrap_content"
                 android:text="5. CWS: 27-68"
                 android:textColor="#D0D8E4"
-                android:textSize="9.5sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:maxLines="1"
+                android:includeFontPadding="false"
                 android:paddingBottom="1dp" />
             <TextView
                 android:id="@+id/widget_team_6"
@@ -247,10 +259,11 @@
                 android:layout_height="wrap_content"
                 android:text="WCGB: 6.0"
                 android:textColor="#FF5252"
-                android:textSize="9sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold|italic"
                 android:gravity="center"
-                android:maxLines="1" />
+                android:maxLines="1"
+                android:includeFontPadding="false" />
         </LinearLayout>
     </LinearLayout>
 
