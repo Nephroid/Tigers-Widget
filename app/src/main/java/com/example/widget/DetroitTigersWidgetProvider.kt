@@ -212,21 +212,36 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         views.setTextViewText(R.id.widget_standing_h2h, "$standingText • ${game.headToHeadRecord}")
         
         // Load logos from URL asynchronously and set them to RemoteViews
+        val isHome = game.isHomeGame
         val tigersLogoUrl = "https://a.espncdn.com/i/teamlogos/mlb/500/det.png"
         val opponentLogoUrl = getTeamLogoUrl(game.opponentName)
 
         val tigersBitmap = loadLogoBitmap(context, tigersLogoUrl)
-        if (tigersBitmap != null) {
-            views.setImageViewBitmap(R.id.widget_tigers_logo, tigersBitmap)
+        val opponentBitmap = loadLogoBitmap(context, opponentLogoUrl)
+
+        // Away team goes on the LEFT (widget_away_logo), Home team goes on the RIGHT (widget_home_logo)
+        val (awayBitmap, awayResFallback) = if (isHome) {
+            Pair(opponentBitmap, R.drawable.ic_baseball_placeholder)
         } else {
-            views.setImageViewResource(R.id.widget_tigers_logo, R.drawable.ic_tigers_logo)
+            Pair(tigersBitmap, R.drawable.ic_tigers_logo)
         }
 
-        val opponentBitmap = loadLogoBitmap(context, opponentLogoUrl)
-        if (opponentBitmap != null) {
-            views.setImageViewBitmap(R.id.widget_opponent_logo, opponentBitmap)
+        val (homeBitmap, homeResFallback) = if (isHome) {
+            Pair(tigersBitmap, R.drawable.ic_tigers_logo)
         } else {
-            views.setImageViewResource(R.id.widget_opponent_logo, R.drawable.ic_baseball_placeholder)
+            Pair(opponentBitmap, R.drawable.ic_baseball_placeholder)
+        }
+
+        if (awayBitmap != null) {
+            views.setImageViewBitmap(R.id.widget_away_logo, awayBitmap)
+        } else {
+            views.setImageViewResource(R.id.widget_away_logo, awayResFallback)
+        }
+
+        if (homeBitmap != null) {
+            views.setImageViewBitmap(R.id.widget_home_logo, homeBitmap)
+        } else {
+            views.setImageViewResource(R.id.widget_home_logo, homeResFallback)
         }
 
         // Bind live Games Back & Playoff Spot values
@@ -260,8 +275,8 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         views.setTextViewText(R.id.widget_countdown, "00d 00h 00m")
         views.setTextViewText(R.id.widget_stadium_pitcher_info, "*Starting Pitcher: TBD")
         views.setTextViewText(R.id.widget_standing_h2h, "Standings unavailable")
-        views.setImageViewResource(R.id.widget_tigers_logo, R.drawable.ic_tigers_logo)
-        views.setImageViewResource(R.id.widget_opponent_logo, R.drawable.ic_baseball_placeholder)
+        views.setImageViewResource(R.id.widget_away_logo, R.drawable.ic_tigers_logo)
+        views.setImageViewResource(R.id.widget_home_logo, R.drawable.ic_baseball_placeholder)
 
         // Bind live Games Back & Playoff Spot values
         bindStandingsStats(context, views)
@@ -439,11 +454,11 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         // 2. Width-based visibility rules
         if (minWidth < 140) {
             // Narrow widget - hide team logos to prevent compressing text in between
-            views.setViewVisibility(R.id.widget_tigers_logo, android.view.View.GONE)
-            views.setViewVisibility(R.id.widget_opponent_logo, android.view.View.GONE)
+            views.setViewVisibility(R.id.widget_away_logo, android.view.View.GONE)
+            views.setViewVisibility(R.id.widget_home_logo, android.view.View.GONE)
         } else {
-            views.setViewVisibility(R.id.widget_tigers_logo, android.view.View.VISIBLE)
-            views.setViewVisibility(R.id.widget_opponent_logo, android.view.View.VISIBLE)
+            views.setViewVisibility(R.id.widget_away_logo, android.view.View.VISIBLE)
+            views.setViewVisibility(R.id.widget_home_logo, android.view.View.VISIBLE)
         }
 
         // 3. Dynamic Text Sizing for Foldable Inner Screen & Phones

@@ -61,9 +61,9 @@
         android:gravity="center"
         android:layout_marginBottom="2dp">
 
-        <!-- Detroit Tigers Logo -->
+        <!-- Away Team Logo (Left) -->
         <ImageView
-            android:id="@+id/widget_tigers_logo"
+            android:id="@+id/widget_away_logo"
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:layout_marginRight="6dp"
@@ -103,14 +103,14 @@
                 android:maxLines="1" />
         </LinearLayout>
 
-        <!-- Opponent Logo -->
+        <!-- Home Team Logo (Right) -->
         <ImageView
-            android:id="@+id/widget_opponent_logo"
+            android:id="@+id/widget_home_logo"
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:layout_marginLeft="6dp"
             android:scaleType="fitCenter"
-            android:src="@android:drawable/ic_menu_gallery" />
+            android:src="@drawable/ic_baseball_placeholder" />
     </LinearLayout>
 
     <!-- Pitcher Last Game Info (Centered) -->
