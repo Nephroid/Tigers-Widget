@@ -47,14 +47,22 @@ android {
   }
 
   signingConfigs {
-    create("release") {
-      val keystoreFile = rootProject.file("release.keystore")
-      if (keystoreFile.exists()) {
+    val keystoreFile = rootProject.file("release.keystore")
+    if (keystoreFile.exists()) {
+      getByName("debug") {
         storeFile = keystoreFile
-        storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "android"
-        keyAlias = System.getenv("KEY_ALIAS") ?: "androidreleasekey"
-        keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
-      } else {
+        storePassword = "tigerswidget"
+        keyAlias = "tigerskey"
+        keyPassword = "tigerswidget"
+      }
+      create("release") {
+        storeFile = keystoreFile
+        storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "tigerswidget"
+        keyAlias = System.getenv("KEY_ALIAS") ?: "tigerskey"
+        keyPassword = System.getenv("KEY_PASSWORD") ?: "tigerswidget"
+      }
+    } else {
+      create("release") {
         val debugKeystore = getByName("debug")
         storeFile = debugKeystore.storeFile
         storePassword = debugKeystore.storePassword
