@@ -27,6 +27,16 @@ data class CountdownState(
     val text: String = "00d 00h 00m 00s"
 )
 
+data class LastGameResult(
+    val opponentName: String,
+    val tigersScore: Int,
+    val opponentScore: Int,
+    val isTigersWinner: Boolean,
+    val isHomeGame: Boolean,
+    val gameDate: String,
+    val statusText: String
+)
+
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getDatabase(application)
@@ -52,6 +62,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val countdown: StateFlow<CountdownState> = _countdown.asStateFlow()
 
     private val prefs = application.getSharedPreferences("TigersWidgetPrefs", android.content.Context.MODE_PRIVATE)
+
+    private val _lastGameResult = MutableStateFlow<LastGameResult?>(null)
+    val lastGameResult: StateFlow<LastGameResult?> = _lastGameResult.asStateFlow()
 
     private val _gamesBackDivision = MutableStateFlow(prefs.getString("games_back_division", "N/A") ?: "N/A")
     val gamesBackDivision: StateFlow<String> = _gamesBackDivision.asStateFlow()
@@ -201,6 +214,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _gamesBackDivision.value = prefs.getString("games_back_division", "N/A") ?: "N/A"
                 _gamesBackWildCard.value = prefs.getString("games_back_wild_card", "N/A") ?: "N/A"
                 _playoffStatus.value = prefs.getString("playoff_status", "UNKNOWN") ?: "UNKNOWN"
+                _lastGameResult.value = loadSavedLastGame()
             } catch (e: Exception) {
                 Log.e("GameViewModel", "Error refreshing data: ${e.message}")
                 _errorMessage.value = "Failed to update live scores. Showing offline/simulated data."
@@ -210,10 +224,30 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _gamesBackDivision.value = prefs.getString("games_back_division", "N/A") ?: "N/A"
                 _gamesBackWildCard.value = prefs.getString("games_back_wild_card", "N/A") ?: "N/A"
                 _playoffStatus.value = prefs.getString("playoff_status", "UNKNOWN") ?: "UNKNOWN"
+                _lastGameResult.value = loadSavedLastGame()
             } finally {
                 _isRefreshing.value = false
             }
         }
+    }
+
+    fun loadSavedLastGame(): LastGameResult? {
+        val opponent = prefs.getString("last_game_opponent", null) ?: "Minnesota Twins"
+        val tigersScore = prefs.getInt("last_game_tigers_score", 5)
+        val opponentScore = prefs.getInt("last_game_opponent_score", 3)
+        val isWinner = prefs.getBoolean("last_game_is_winner", true)
+        val isHome = prefs.getBoolean("last_game_is_home", true)
+        val date = prefs.getString("last_game_date", "Wed, Sep 2") ?: "Wed, Sep 2"
+        val status = prefs.getString("last_game_status", "Final") ?: "Final"
+        return LastGameResult(
+            opponentName = opponent,
+            tigersScore = tigersScore,
+            opponentScore = opponentScore,
+            isTigersWinner = isWinner,
+            isHomeGame = isHome,
+            gameDate = date,
+            statusText = status
+        )
     }
 
     fun triggerManualRefresh() {

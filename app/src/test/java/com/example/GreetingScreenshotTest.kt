@@ -70,38 +70,28 @@ class GreetingScreenshotTest {
   }
 
   @Test
-  fun roster_preview_screenshot() {
-    val sampleRoster = listOf(
-      com.example.data.api.MlbRosterEntry(com.example.data.api.MlbPersonInfo(669373, "Tarik Skubal"), "29", com.example.data.api.MlbPositionInfo(type = "Pitcher", abbreviation = "LHP")),
-      com.example.data.api.MlbRosterEntry(com.example.data.api.MlbPersonInfo(681857, "Reese Olson"), "45", com.example.data.api.MlbPositionInfo(type = "Pitcher", abbreviation = "RHP")),
-      com.example.data.api.MlbRosterEntry(com.example.data.api.MlbPersonInfo(663554, "Casey Mize"), "12", com.example.data.api.MlbPositionInfo(type = "Pitcher", abbreviation = "RHP")),
-      com.example.data.api.MlbRosterEntry(com.example.data.api.MlbPersonInfo(695549, "Jackson Jobe"), "21", com.example.data.api.MlbPositionInfo(type = "Pitcher", abbreviation = "RHP")),
-      com.example.data.api.MlbRosterEntry(com.example.data.api.MlbPersonInfo(682998, "Riley Greene"), "31", com.example.data.api.MlbPositionInfo(type = "Outfielder", abbreviation = "LF")),
-      com.example.data.api.MlbRosterEntry(com.example.data.api.MlbPersonInfo(681481, "Kerry Carpenter"), "30", com.example.data.api.MlbPositionInfo(type = "Outfielder", abbreviation = "RF")),
-      com.example.data.api.MlbRosterEntry(com.example.data.api.MlbPersonInfo(690993, "Colt Keith"), "33", com.example.data.api.MlbPositionInfo(type = "Infielder", abbreviation = "2B")),
-      com.example.data.api.MlbRosterEntry(com.example.data.api.MlbPersonInfo(650402, "Gleyber Torres"), "25", com.example.data.api.MlbPositionInfo(type = "Infielder", abbreviation = "2B"))
+  fun last_game_result_preview_screenshot() {
+    val sampleLastGame = com.example.ui.LastGameResult(
+      opponentName = "Minnesota Twins",
+      tigersScore = 5,
+      opponentScore = 3,
+      isTigersWinner = true,
+      isHomeGame = true,
+      gameDate = "Wed, Sep 2",
+      statusText = "Final"
     )
 
     composeTestRule.setContent {
       MyApplicationTheme {
-        androidx.compose.foundation.layout.Column(
-          modifier = Modifier.padding(16.dp),
-          verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+        androidx.compose.foundation.layout.Box(
+          modifier = Modifier.padding(16.dp)
         ) {
-          androidx.compose.material3.Text(
-            text = "DETROIT TIGERS SQUAD (SAMPLE)",
-            style = androidx.compose.ui.text.TextStyle(
-              color = androidx.compose.ui.graphics.Color(0xFFFFC107),
-              fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-              fontSize = 12.sp
-            )
-          )
-          com.example.ui.FlowRowLayout(items = sampleRoster)
+          com.example.ui.LastGameResultCard(result = sampleLastGame)
         }
       }
     }
 
-    composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/roster_preview.png")
+    composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/last_game_preview.png")
   }
 }
 
