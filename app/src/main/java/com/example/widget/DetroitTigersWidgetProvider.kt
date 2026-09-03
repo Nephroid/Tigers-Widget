@@ -401,44 +401,15 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private fun applyResponsiveLayout(context: Context, views: RemoteViews, minWidth: Int, minHeight: Int) {
+    fun applyResponsiveLayout(context: Context, views: RemoteViews, minWidth: Int, minHeight: Int) {
+        applyResponsiveLayout(views, minWidth, minHeight, context)
+    }
+
+    fun applyResponsiveLayout(views: RemoteViews, minWidth: Int, minHeight: Int, context: Context? = null) {
         Log.d("TigersWidget", "Applying responsive layout: width=$minWidth, height=$minHeight")
-        val density = context.resources.displayMetrics.density
+        val density = context?.resources?.displayMetrics?.density ?: 2f
 
-        // Dynamic responsive font scaling to fill available widget space and eliminate dead space
-        val heightRatio = (minHeight / 110f).coerceIn(0.8f, 2.5f)
-        val widthRatio = (minWidth / 180f).coerceIn(0.8f, 2.2f)
-        val scale = (heightRatio * 0.65f + widthRatio * 0.35f).coerceIn(0.85f, 2.4f)
-
-        val titleSp = (11.5f * scale).coerceIn(10f, 18f)
-        val tagSp = (9f * scale).coerceIn(8f, 13f)
-        val oppSp = (13f * scale).coerceIn(11.5f, 22f)
-        val countdownSp = (20f * scale).coerceIn(17f, 38f)
-        val pitcherSp = (11f * scale).coerceIn(9.5f, 16f)
-        val standingH2hSp = (9.5f * scale).coerceIn(8.5f, 14.5f)
-        val tableSp = (9.5f * scale).coerceIn(8.5f, 14f)
-        val tableWcSp = (9f * scale).coerceIn(8f, 13.5f)
-
-        views.setTextViewTextSize(R.id.widget_title, android.util.TypedValue.COMPLEX_UNIT_SP, titleSp)
-        views.setTextViewTextSize(R.id.widget_tag, android.util.TypedValue.COMPLEX_UNIT_SP, tagSp)
-        views.setTextViewTextSize(R.id.widget_opponent, android.util.TypedValue.COMPLEX_UNIT_SP, oppSp)
-        views.setTextViewTextSize(R.id.widget_countdown, android.util.TypedValue.COMPLEX_UNIT_SP, countdownSp)
-        views.setTextViewTextSize(R.id.widget_stadium_pitcher_info, android.util.TypedValue.COMPLEX_UNIT_SP, pitcherSp)
-        views.setTextViewTextSize(R.id.widget_standing_h2h, android.util.TypedValue.COMPLEX_UNIT_SP, standingH2hSp)
-
-        views.setTextViewTextSize(R.id.widget_team_1, android.util.TypedValue.COMPLEX_UNIT_SP, tableSp)
-        views.setTextViewTextSize(R.id.widget_team_2, android.util.TypedValue.COMPLEX_UNIT_SP, tableSp)
-        views.setTextViewTextSize(R.id.widget_team_3, android.util.TypedValue.COMPLEX_UNIT_SP, tableSp)
-        views.setTextViewTextSize(R.id.widget_team_4, android.util.TypedValue.COMPLEX_UNIT_SP, tableSp)
-        views.setTextViewTextSize(R.id.widget_team_5, android.util.TypedValue.COMPLEX_UNIT_SP, tableSp)
-        views.setTextViewTextSize(R.id.widget_team_6, android.util.TypedValue.COMPLEX_UNIT_SP, tableWcSp)
-
-        // Dynamic padding adjustment: compact for small widgets, expanding for spacious widgets
-        val padH = (minOf(minWidth * 0.035f, 14f) * density).toInt().coerceAtLeast((3 * density).toInt())
-        val padV = (minOf(minHeight * 0.035f, 14f) * density).toInt().coerceAtLeast((3 * density).toInt())
-        views.setViewPadding(R.id.widget_root, padH, padV, padH, padV)
-
-        // 1. Height-based rules
+        // 1. Height-based visibility rules
         if (minHeight < 90) {
             // Ultra-compact size - show only matchup & countdown
             views.setViewVisibility(R.id.widget_header_layout, android.view.View.GONE)
@@ -446,15 +417,15 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
             views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_standings_table, android.view.View.GONE)
-        } else if (minHeight < 120) {
-            // Intermediate compact size
+        } else if (minHeight < 110) {
+            // Compact size - hide standings table to prevent vertical overflow/clipping
             views.setViewVisibility(R.id.widget_header_layout, android.view.View.VISIBLE)
             views.setViewVisibility(R.id.widget_divider_top, android.view.View.VISIBLE)
-            views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.VISIBLE)
+            views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.VISIBLE)
-            views.setViewVisibility(R.id.widget_standings_table, android.view.View.VISIBLE)
+            views.setViewVisibility(R.id.widget_standings_table, android.view.View.GONE)
         } else {
-            // Full size - show all elements with dynamic typography filling the available area
+            // Regular / Full size - show all elements
             views.setViewVisibility(R.id.widget_header_layout, android.view.View.VISIBLE)
             views.setViewVisibility(R.id.widget_divider_top, android.view.View.VISIBLE)
             views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.VISIBLE)
@@ -462,15 +433,74 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
             views.setViewVisibility(R.id.widget_standings_table, android.view.View.VISIBLE)
         }
 
-        // 2. Width-based rules
+        // 2. Width-based visibility rules
         if (minWidth < 140) {
-            // Narrow widget - hide team logos to prevent compressing the texts in between
+            // Narrow widget - hide team logos to prevent compressing text in between
             views.setViewVisibility(R.id.widget_tigers_logo, android.view.View.GONE)
             views.setViewVisibility(R.id.widget_opponent_logo, android.view.View.GONE)
         } else {
             views.setViewVisibility(R.id.widget_tigers_logo, android.view.View.VISIBLE)
             views.setViewVisibility(R.id.widget_opponent_logo, android.view.View.VISIBLE)
         }
+
+        // 3. Dynamic Text Sizing for Foldable Inner Screen (Pixel Fold / Pixel 10 Fold Pro / sw600dp / wide widget)
+        val titleSp: Float
+        val tagSp: Float
+        val opponentSp: Float
+        val countdownSp: Float
+        val pitcherSp: Float
+        val standingH2hSp: Float
+        val teamSp: Float
+
+        if (minWidth < 140 || minHeight < 110) {
+            // Compact screen
+            titleSp = 11f
+            tagSp = 9f
+            opponentSp = 13f
+            countdownSp = 18f
+            pitcherSp = 11f
+            standingH2hSp = 9.5f
+            teamSp = 9f
+        } else if (minWidth >= 250 || minHeight >= 150) {
+            // Foldable Inner Display / Large Screen (e.g. Pixel Fold / Pixel 10 Fold Pro inner screen)
+            titleSp = 16f
+            tagSp = 12f
+            opponentSp = 19f
+            countdownSp = 28f
+            pitcherSp = 14f
+            standingH2hSp = 12f
+            teamSp = 12f
+        } else {
+            // Standard phone display
+            titleSp = 13f
+            tagSp = 10f
+            opponentSp = 15f
+            countdownSp = 22f
+            pitcherSp = 12f
+            standingH2hSp = 10f
+            teamSp = 10f
+        }
+
+        // Apply text sizes to RemoteViews
+        views.setTextViewTextSize(R.id.widget_title, android.util.TypedValue.COMPLEX_UNIT_SP, titleSp)
+        views.setTextViewTextSize(R.id.widget_tag, android.util.TypedValue.COMPLEX_UNIT_SP, tagSp)
+        views.setTextViewTextSize(R.id.widget_opponent, android.util.TypedValue.COMPLEX_UNIT_SP, opponentSp)
+        views.setTextViewTextSize(R.id.widget_countdown, android.util.TypedValue.COMPLEX_UNIT_SP, countdownSp)
+        views.setTextViewTextSize(R.id.widget_stadium_pitcher_info, android.util.TypedValue.COMPLEX_UNIT_SP, pitcherSp)
+        views.setTextViewTextSize(R.id.widget_standing_h2h, android.util.TypedValue.COMPLEX_UNIT_SP, standingH2hSp)
+
+        // Ensure ALL 6 standings team texts share exact same text size for baseline alignment across columns
+        views.setTextViewTextSize(R.id.widget_team_1, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
+        views.setTextViewTextSize(R.id.widget_team_2, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
+        views.setTextViewTextSize(R.id.widget_team_3, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
+        views.setTextViewTextSize(R.id.widget_team_4, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
+        views.setTextViewTextSize(R.id.widget_team_5, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
+        views.setTextViewTextSize(R.id.widget_team_6, android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
+
+        // Dynamic padding adjustment: compact for small widgets, expanding for spacious widgets
+        val padH = (minOf(minWidth * 0.035f, 14f) * density).toInt().coerceAtLeast((3 * density).toInt())
+        val padV = (minOf(minHeight * 0.035f, 14f) * density).toInt().coerceAtLeast((3 * density).toInt())
+        views.setViewPadding(R.id.widget_root, padH, padV, padH, padV)
     }
 
     private suspend fun loadLogoBitmap(context: Context, url: String): Bitmap? {
@@ -529,12 +559,21 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         val intervalMs = 15 * 60 * 1000L // 15-minute battery-friendly periodic refresh
         val triggerAt = android.os.SystemClock.elapsedRealtime() + intervalMs
         try {
-            alarmManager.setInexactRepeating(
-                android.app.AlarmManager.ELAPSED_REALTIME,
-                triggerAt,
-                intervalMs,
-                pendingIntent
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // Ensure alarm triggers even in Doze mode without requiring exact alarm permissions
+                alarmManager.setAndAllowWhileIdle(
+                    android.app.AlarmManager.ELAPSED_REALTIME,
+                    triggerAt,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setInexactRepeating(
+                    android.app.AlarmManager.ELAPSED_REALTIME,
+                    triggerAt,
+                    intervalMs,
+                    pendingIntent
+                )
+            }
         } catch (e: Exception) {
             Log.e("TigersWidget", "Error scheduling auto refresh alarm: ${e.message}")
         }
