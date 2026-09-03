@@ -27,6 +27,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import android.content.Context
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -36,6 +37,7 @@ import coil.compose.AsyncImage
 import com.example.data.model.UpcomingGame
 import com.example.data.model.getPitcherImageUrl
 import com.example.data.model.getTeamLogoUrl
+import com.example.widget.DetroitTigersWidgetProvider
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -174,6 +176,9 @@ fun GameDashboard(
                     if (games.size > 1) {
                         UpcomingScheduleSection(games = games.drop(1).take(3))
                     }
+
+                    // 5. Widget Customization: Material You Dynamic Theming
+                    WidgetThemingCard(context = context)
                 }
 
                 // App Version Footer
@@ -1430,6 +1435,79 @@ fun getTeamAbbreviation(teamName: String): String {
         upper.contains("PADRE") || "SD" in words || "SDP" in words || upper.contains("SAN DIEGO") -> "SD"
         upper.contains("GIANT") || "SF" in words || "SFG" in words || upper.contains("SAN FRANCISCO") -> "SF"
         else -> teamName.take(3).uppercase()
+    }
+}
+
+@Composable
+fun WidgetThemingCard(context: Context) {
+    val prefs = remember { context.getSharedPreferences("TigersWidgetPrefs", Context.MODE_PRIVATE) }
+    var isMaterialYou by remember { mutableStateOf(prefs.getBoolean("widget_material_you_enabled", false)) }
+
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0C1D36)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Color(0xFF1B365D), RoundedCornerShape(18.dp))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "🎨",
+                        fontSize = 16.sp
+                    )
+                    Text(
+                        text = "Widget Theme",
+                        style = TextStyle(
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = if (isMaterialYou) "Material You (Dynamic Colors)" else "Detroit Tigers Classic (Navy & Orange)",
+                    style = TextStyle(
+                        color = if (isMaterialYou) Color(0xFF81C784) else Color(0xFFFF823C),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                )
+                Text(
+                    text = "Tap 🎨 directly on the widget or toggle here",
+                    style = TextStyle(
+                        color = Color.White.copy(alpha = 0.45f),
+                        fontSize = 10.5.sp
+                    )
+                )
+            }
+
+            Switch(
+                checked = isMaterialYou,
+                onCheckedChange = { checked ->
+                    isMaterialYou = checked
+                    prefs.edit().putBoolean("widget_material_you_enabled", checked).apply()
+                    DetroitTigersWidgetProvider.triggerUpdate(context)
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFFFA4616),
+                    uncheckedThumbColor = Color.White.copy(alpha = 0.6f),
+                    uncheckedTrackColor = Color(0xFF1B365D)
+                )
+            )
+        }
     }
 }
 

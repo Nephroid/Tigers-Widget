@@ -78,6 +78,26 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         Log.d("TigersWidget", "onReceive action: ${intent.action}")
+        if (intent.action == ACTION_TOGGLE_THEME) {
+            val prefs = context.getSharedPreferences("TigersWidgetPrefs", Context.MODE_PRIVATE)
+            val current = prefs.getBoolean("widget_material_you_enabled", false)
+            prefs.edit().putBoolean("widget_material_you_enabled", !current).apply()
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val componentName = ComponentName(context, DetroitTigersWidgetProvider::class.java)
+            val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
+            if (appWidgetIds.isNotEmpty()) {
+                val pendingResult = goAsync()
+                widgetScope.launch {
+                    try {
+                        updateAllWidgets(context, appWidgetManager, appWidgetIds)
+                    } finally {
+                        pendingResult.finish()
+                    }
+                }
+            }
+            return
+        }
+
         if (intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE ||
             intent.action == Intent.ACTION_MY_PACKAGE_REPLACED ||
             intent.action == Intent.ACTION_BOOT_COMPLETED ||
@@ -122,19 +142,35 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
                 }
             }
 
+            val isMaterialYou = prefs.getBoolean("widget_material_you_enabled", false)
+            val layoutRes = if (isMaterialYou) R.layout.detroit_tigers_widget_layout_material_you else R.layout.detroit_tigers_widget_layout
+
             val games = db.gameDao().getUpcomingGames().firstOrNull() ?: emptyList()
             val nextGame = games.firstOrNull()
 
             appWidgetIds.forEach { widgetId ->
-                val views = RemoteViews(context.packageName, R.layout.detroit_tigers_widget_layout)
+                val views = RemoteViews(context.packageName, layoutRes)
                 
                 // Query current widget options for responsive sizing
                 val options = overrideOptions ?: appWidgetManager.getAppWidgetOptions(widgetId)
                 val minWidth = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) ?: 180
                 val minHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) ?: 110
 
+                // Theme toggle click intent
+                val toggleIntent = Intent(context, DetroitTigersWidgetProvider::class.java).apply {
+                    action = ACTION_TOGGLE_THEME
+                }
+                val togglePending = PendingIntent.getBroadcast(
+                    context,
+                    widgetId,
+                    toggleIntent,
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT
+                )
+                views.setOnClickPendingIntent(R.id.widget_theme_toggle, togglePending)
+                views.setTextViewText(R.id.widget_theme_toggle, if (isMaterialYou) "🎨 DYNAMIC" else "🎨 CLASSIC")
+
                 if (nextGame != null) {
-                    bindGameData(context, views, nextGame, minWidth)
+                    bindGameData(context, views, nextGame, minWidth, isMaterialYou)
                 } else {
                     bindEmptyState(context, views)
                 }
@@ -167,7 +203,7 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private suspend fun bindGameData(context: Context, views: RemoteViews, game: UpcomingGame, minWidth: Int = 180) {
+    private suspend fun bindGameData(context: Context, views: RemoteViews, game: UpcomingGame, minWidth: Int = 180, isMaterialYou: Boolean = false) {
         val isHome = game.isHomeGame
         val prefix = if (isHome) "vs." else "at"
         views.setTextViewText(R.id.widget_opponent, "$prefix ${game.opponentName}")
@@ -194,15 +230,25 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         val cleanName = cleanPitcherName(game.pitcherName)
         val handSuffix = if (game.pitcherHand.isNotEmpty()) " (${game.pitcherHand})" else ""
         val rawPitcherHtml = if (cleanName.equals("TBD", ignoreCase = true)) {
-            "SP: <b><font color='#FA4616'>TBD</font></b>"
+            if (isMaterialYou) "SP: <b>TBD</b>" else "SP: <b><font color='#FA4616'>TBD</font></b>"
         } else {
-            String.format(
-                "SP: <b><font color='#FA4616'>%s%s</font></b> • <font color='#98A6B8'>(LG: %.1f IP, %d SO)</font>",
-                cleanName,
-                handSuffix,
-                game.pitcherLastIp,
-                game.pitcherLastSo
-            )
+            if (isMaterialYou) {
+                String.format(
+                    "SP: <b>%s%s</b> • (LG: %.1f IP, %d SO)",
+                    cleanName,
+                    handSuffix,
+                    game.pitcherLastIp,
+                    game.pitcherLastSo
+                )
+            } else {
+                String.format(
+                    "SP: <b><font color='#FA4616'>%s%s</font></b> • <font color='#98A6B8'>(LG: %.1f IP, %d SO)</font>",
+                    cleanName,
+                    handSuffix,
+                    game.pitcherLastIp,
+                    game.pitcherLastSo
+                )
+            }
         }
         val formattedPitcherText = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             android.text.Html.fromHtml(rawPitcherHtml, android.text.Html.FROM_HTML_MODE_LEGACY)
@@ -650,6 +696,7 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_AUTO_UPDATE = "com.example.widget.ACTION_AUTO_UPDATE"
+        const val ACTION_TOGGLE_THEME = "com.example.widget.ACTION_TOGGLE_THEME"
         private const val ALARM_REQUEST_CODE = 9981
 
         fun triggerUpdate(context: Context) {

@@ -53,4 +53,11 @@ class DetroitTigersWidgetProviderTest {
         provider.applyResponsiveLayout(views, minWidth = 120, minHeight = 90, context = context)
         assertNotNull(views)
     }
+
+    @Test
+    fun testApplyResponsiveLayout_MaterialYouLayout() {
+        val views = RemoteViews(context.packageName, R.layout.detroit_tigers_widget_layout_material_you)
+        provider.applyResponsiveLayout(views, minWidth = 380, minHeight = 115, context = context)
+        assertNotNull(views)
+    }
 }
