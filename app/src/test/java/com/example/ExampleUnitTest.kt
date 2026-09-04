@@ -99,4 +99,60 @@ class ExampleUnitTest {
       )
     }
   }
+
+  @Test
+  fun testCityNameAndRelocationAliases() {
+    val cityMap = mapOf(
+      "Cleveland" to "cle",
+      "Minnesota" to "min",
+      "Detroit" to "det",
+      "Baltimore" to "bal",
+      "Boston" to "bos",
+      "Toronto" to "tor",
+      "Houston" to "hou",
+      "Seattle" to "sea",
+      "Atlanta" to "atl",
+      "Miami" to "mia",
+      "Philadelphia" to "phi",
+      "Washington" to "wsh",
+      "Cincinnati" to "cin",
+      "Milwaukee" to "mil",
+      "Pittsburgh" to "pit",
+      "St. Louis" to "stl",
+      "Colorado" to "col",
+      "San Diego" to "sd",
+      "San Francisco" to "sf",
+      "Sacramento" to "oak",
+      "Sacramento Athletics" to "oak",
+      "Oakland" to "oak"
+    )
+
+    cityMap.forEach { (city, expectedCode) ->
+      val logoUrl = getTeamLogoUrl(city)
+      assertTrue(
+        "For city '$city', expected '$expectedCode', but got '$logoUrl'",
+        logoUrl.endsWith("$expectedCode.png")
+      )
+    }
+  }
+
+  @Test
+  fun testAll30MlbOfficialTeamIds() {
+    val teamIdMap = mapOf(
+      108 to "laa", 109 to "ari", 110 to "bal", 111 to "bos", 112 to "chc",
+      113 to "cin", 114 to "cle", 115 to "col", 116 to "det", 117 to "hou",
+      118 to "kc",  119 to "lad", 120 to "wsh", 121 to "nym", 133 to "oak",
+      134 to "pit", 135 to "sd",  136 to "sea", 137 to "sf",  138 to "stl",
+      139 to "tb",  140 to "tex", 141 to "tor", 142 to "min", 143 to "phi",
+      144 to "atl", 145 to "chw", 146 to "mia", 147 to "nyy", 158 to "mil"
+    )
+
+    teamIdMap.forEach { (id, expectedCode) ->
+      val logoUrl = getTeamLogoUrl("Random Name", id)
+      assertTrue(
+        "For team ID $id, expected code '$expectedCode', but got '$logoUrl'",
+        logoUrl.endsWith("$expectedCode.png")
+      )
+    }
+  }
 }

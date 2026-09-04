@@ -43,35 +43,48 @@ fun getTeamLogoUrl(teamName: String, teamId: Int? = null): String {
     }
 
     val upper = teamName.uppercase().trim()
-    val words = upper.replace(".", " ").split(WHITESPACE_REGEX).toSet()
+    val words = upper.replace(".", " ").replace("-", " ").split(WHITESPACE_REGEX).toSet()
     val code = when {
+        // Multi-team metro checks first to prevent misattribution
         upper.contains("DODGER") || upper.contains("LA DODGER") || upper.contains("LOS ANGELES DODGER") || "LAD" in words -> "lad"
         upper.contains("ANGEL") || upper.contains("LA ANGEL") || upper.contains("LOS ANGELES ANGEL") || upper.contains("ANAHEIM") || "LAA" in words -> "laa"
-        upper.contains("TIGER") || "DET" in words -> "det"
-        upper.contains("GUARD") || upper.contains("INDIAN") || "CLE" in words -> "cle"
-        upper.contains("TWIN") || "MIN" in words -> "min"
-        upper.contains("ROYAL") || "KC" in words || "KCR" in words || upper.contains("KANSAS") -> "kc"
         upper.contains("WHITE SOX") || "CHW" in words || "CWS" in words || upper.contains("CHICAGO WHITE") -> "chw"
-        upper.contains("RED SOX") || "BOS" in words || upper.contains("BOSTON") -> "bos"
-        upper.contains("BLUE JAY") || "TOR" in words || upper.contains("TORONTO") -> "tor"
+        upper.contains("CUB") || "CHC" in words || upper.contains("CHICAGO CUBS") -> "chc"
         upper.contains("YANKE") || "NYY" in words -> "nyy"
         upper.contains("MET") || "NYM" in words -> "nym"
+        upper.contains("RED SOX") || "BOS" in words || upper.contains("BOSTON") -> "bos"
+
+        // AL Central & Tigers
+        upper.contains("TIGER") || "DET" in words || upper.contains("DETROIT") -> "det"
+        upper.contains("GUARD") || upper.contains("INDIAN") || "CLE" in words || upper.contains("CLEVELAND") -> "cle"
+        upper.contains("TWIN") || "MIN" in words || upper.contains("MINNESOTA") -> "min"
+        upper.contains("ROYAL") || "KC" in words || "KCR" in words || upper.contains("KANSAS") -> "kc"
+
+        // AL East
         upper.contains("ORIOLE") || "BAL" in words || upper.contains("BALTIMORE") -> "bal"
         upper.contains("RAY") || "TB" in words || "TBR" in words || upper.contains("TAMPA") -> "tb"
+        upper.contains("BLUE JAY") || "TOR" in words || upper.contains("TORONTO") || "JAYS" in words -> "tor"
+
+        // AL West
         upper.contains("ASTRO") || "HOU" in words || upper.contains("HOUSTON") -> "hou"
-        upper.contains("ATHLET") || "OAK" in words || "ATH" in words || upper.contains("OAKLAND") || "A'S" in words || "AS" in words -> "oak"
+        upper.contains("ATHLET") || "OAK" in words || "ATH" in words || upper.contains("OAKLAND") || upper.contains("SACRAMENTO") || "A'S" in words || "AS" in words -> "oak"
         upper.contains("MARINER") || "SEA" in words || upper.contains("SEATTLE") -> "sea"
         upper.contains("RANGER") || "TEX" in words || upper.contains("TEXAS") -> "tex"
+
+        // NL East
         upper.contains("BRAVE") || "ATL" in words || upper.contains("ATLANTA") -> "atl"
         upper.contains("MARLIN") || "MIA" in words || upper.contains("MIAMI") -> "mia"
         upper.contains("PHILLI") || "PHI" in words || upper.contains("PHILADELPHIA") -> "phi"
         upper.contains("NATIONAL") || "WSH" in words || "WAS" in words || upper.contains("WASHINGTON") -> "wsh"
-        upper.contains("CUB") || "CHC" in words || upper.contains("CHICAGO CUBS") -> "chc"
-        upper.contains("RED") || "CIN" in words || upper.contains("CINCINNATI") -> "cin"
+
+        // NL Central
+        "RED" in words || "REDS" in words || "CIN" in words || upper.contains("CINCINNATI") -> "cin"
         upper.contains("BREWER") || "MIL" in words || upper.contains("MILWAUKEE") -> "mil"
         upper.contains("PIRATE") || "PIT" in words || upper.contains("PITTSBURGH") -> "pit"
         upper.contains("CARDINAL") || "STL" in words || upper.contains("ST. LOUIS") || upper.contains("ST LOUIS") -> "stl"
-        upper.contains("DIAMONDBACK") || upper.contains("D-BACK") || "ARI" in words || upper.contains("ARIZONA") -> "ari"
+
+        // NL West
+        upper.contains("DIAMONDBACK") || upper.contains("D-BACK") || "ARI" in words || "AZ" in words || upper.contains("ARIZONA") -> "ari"
         upper.contains("ROCKIE") || "COL" in words || upper.contains("COLORADO") -> "col"
         upper.contains("PADRE") || "SD" in words || "SDP" in words || upper.contains("SAN DIEGO") -> "sd"
         upper.contains("GIANT") || "SF" in words || "SFG" in words || upper.contains("SAN FRANCISCO") -> "sf"
