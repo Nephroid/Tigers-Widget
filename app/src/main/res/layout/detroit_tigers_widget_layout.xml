@@ -8,19 +8,21 @@
     android:gravity="fill"
     android:clipToPadding="true"
     android:clipChildren="true"
-    android:paddingLeft="4dp"
-    android:paddingRight="4dp"
-    android:paddingTop="3dp"
-    android:paddingBottom="3dp">
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
 
-    <!-- Header Row: title + NEXT GAME badge + 🎨 THEME button -->
+    <!-- Header Row: Title + Next Game badge on Left, Theme Toggle on Right -->
     <LinearLayout
         android:id="@+id/widget_header_layout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1.6"
+        android:layout_weight="1.2"
         android:orientation="horizontal"
-        android:gravity="center_vertical|center_horizontal">
+        android:gravity="center_vertical"
+        android:paddingLeft="2dp"
+        android:paddingRight="2dp">
 
         <TextView
             android:id="@+id/widget_title"
@@ -30,7 +32,7 @@
             android:textColor="#FA4616"
             android:textSize="10sp"
             android:textStyle="bold"
-            android:letterSpacing="0.03"
+            android:letterSpacing="0.04"
             android:includeFontPadding="false"
             android:layout_marginEnd="6dp" />
 
@@ -38,27 +40,32 @@
             android:id="@+id/widget_tag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="#1B365D"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:background="@drawable/widget_tag_classic"
+            android:paddingLeft="7dp"
+            android:paddingRight="7dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:text="NEXT GAME"
             android:textColor="#FFFFFF"
             android:textSize="8sp"
             android:textStyle="bold"
             android:includeFontPadding="false" />
 
+        <!-- Flexible Spacer to push the theme toggle to the far right -->
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
         <TextView
             android:id="@+id/widget_theme_toggle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="#1B365D"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
-            android:layout_marginStart="6dp"
+            android:background="@drawable/widget_tag_classic"
+            android:paddingLeft="7dp"
+            android:paddingRight="7dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:text="🎨 THEME"
             android:textColor="#FA4616"
             android:textSize="8sp"
@@ -66,23 +73,28 @@
             android:includeFontPadding="false" />
     </LinearLayout>
 
-    <!-- Thin divider (FrameLayout used — View is not in the RemoteViews whitelist) -->
+    <!-- Thin subtle divider -->
     <FrameLayout
         android:id="@+id/widget_divider_top"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#1B365D"
-        android:layout_marginTop="1dp"
-        android:layout_marginBottom="1dp" />
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="3dp" />
 
-    <!-- Matchup Row: Away Logo | Opponent + Countdown | Home Logo -->
+    <!-- Matchup Hero Card: Away Logo | Opponent + Bold Countdown | Home Logo -->
     <LinearLayout
         android:id="@+id/widget_matchup_layout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="4"
+        android:layout_weight="5.0"
+        android:background="@drawable/widget_hero_card_bg"
         android:orientation="horizontal"
-        android:gravity="center">
+        android:gravity="center"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp">
 
         <!-- Away Team Logo -->
         <ImageView
@@ -91,14 +103,14 @@
             android:layout_height="match_parent"
             android:layout_weight="1.2"
             android:scaleType="fitCenter"
-            android:adjustViewBounds="true"
+            android:padding="2dp"
             android:src="@drawable/ic_tigers_logo" />
 
-        <!-- Center: Opponent name + Countdown -->
+        <!-- Center: Opponent name + Bold Countdown -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="4"
+            android:layout_weight="3.2"
             android:orientation="vertical"
             android:gravity="center">
 
@@ -110,6 +122,7 @@
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:textStyle="bold"
+                android:letterSpacing="0.02"
                 android:gravity="center"
                 android:maxLines="1"
                 android:ellipsize="end"
@@ -121,7 +134,7 @@
                 android:layout_height="wrap_content"
                 android:text="02h 45m"
                 android:textColor="#FA4616"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:maxLines="1"
@@ -135,47 +148,70 @@
             android:layout_height="match_parent"
             android:layout_weight="1.2"
             android:scaleType="fitCenter"
-            android:adjustViewBounds="true"
+            android:padding="2dp"
             android:src="@drawable/ic_baseball_placeholder" />
     </LinearLayout>
 
-    <!-- Starting Pitcher line -->
-    <TextView
-        android:id="@+id/widget_stadium_pitcher_info"
+    <!-- Pitcher & Standing Context Info Card -->
+    <LinearLayout
+        android:id="@+id/widget_info_card"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1.4"
-        android:text="SP: Tarik Skubal (L) • (LG: 7.0 IP, 9 SO)"
-        android:textColor="#FFFFFF"
-        android:textSize="9sp"
-        android:textStyle="bold"
-        android:gravity="center|center_vertical"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:includeFontPadding="false" />
+        android:layout_weight="2.0"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:background="@drawable/widget_info_pill_bg"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp">
 
-    <!-- Tigers Standing & H2H record -->
-    <TextView
-        android:id="@+id/widget_standing_h2h"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1.3"
-        android:text="2nd in AL Central • Record: 4-3 vs CLE"
-        android:textColor="#FFC107"
-        android:textSize="8sp"
-        android:textStyle="bold"
-        android:gravity="center|center_vertical"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:includeFontPadding="false" />
+        <!-- Starting Pitcher line -->
+        <TextView
+            android:id="@+id/widget_stadium_pitcher_info"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:text="SP: Tarik Skubal (L) • (LG: 7.0 IP, 9 SO)"
+            android:textColor="#FFFFFF"
+            android:textSize="9.5sp"
+            android:textStyle="bold"
+            android:gravity="center|center_vertical"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false" />
 
-    <!-- AL Central Standings: 3 columns filling remaining space -->
+        <!-- Tigers Standing & H2H record -->
+        <TextView
+            android:id="@+id/widget_standing_h2h"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:text="2nd in AL Central • Record: 4-3 vs CLE"
+            android:textColor="#FFC107"
+            android:textSize="8.5sp"
+            android:textStyle="bold"
+            android:gravity="center|center_vertical"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false" />
+    </LinearLayout>
+
+    <!-- AL Central Standings Card: 3 columns filling remaining space -->
     <LinearLayout
         android:id="@+id/widget_standings_table"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="2.7"
-        android:orientation="horizontal">
+        android:layout_weight="2.8"
+        android:background="@drawable/widget_standings_card_bg"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp">
 
         <!-- Column 1: Teams 1 & 2 -->
         <LinearLayout
@@ -192,7 +228,7 @@
                 android:layout_weight="1"
                 android:text="1. CLE: 58-37"
                 android:textColor="#D0D8E4"
-                android:textSize="8sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold"
                 android:gravity="center|center_vertical"
                 android:maxLines="1"
@@ -206,7 +242,7 @@
                 android:layout_weight="1"
                 android:text="2. MIN: 53-41"
                 android:textColor="#D0D8E4"
-                android:textSize="8sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold"
                 android:gravity="center|center_vertical"
                 android:maxLines="1"
@@ -229,7 +265,7 @@
                 android:layout_weight="1"
                 android:text="3. KC: 52-43"
                 android:textColor="#D0D8E4"
-                android:textSize="8sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold"
                 android:gravity="center|center_vertical"
                 android:maxLines="1"
@@ -243,7 +279,7 @@
                 android:layout_weight="1"
                 android:text="4. DET: 47-53"
                 android:textColor="#FFC107"
-                android:textSize="8sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold"
                 android:gravity="center|center_vertical"
                 android:maxLines="1"
@@ -266,7 +302,7 @@
                 android:layout_weight="1"
                 android:text="5. CWS: 27-68"
                 android:textColor="#D0D8E4"
-                android:textSize="8sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold"
                 android:gravity="center|center_vertical"
                 android:maxLines="1"
@@ -280,7 +316,7 @@
                 android:layout_weight="1"
                 android:text="WCGB: 6.0"
                 android:textColor="#FF5252"
-                android:textSize="8sp"
+                android:textSize="8.5sp"
                 android:textStyle="bold|italic"
                 android:gravity="center|center_vertical"
                 android:maxLines="1"

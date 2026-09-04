@@ -676,6 +676,7 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
                 // Single row — just show matchup and countdown, nothing else
                 views.setViewVisibility(R.id.widget_header_layout, android.view.View.GONE)
                 views.setViewVisibility(R.id.widget_divider_top, android.view.View.GONE)
+                views.setViewVisibility(R.id.widget_info_card, android.view.View.GONE)
                 views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.GONE)
                 views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.GONE)
                 views.setViewVisibility(R.id.widget_standings_table, android.view.View.GONE)
@@ -684,6 +685,7 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
                 // Narrow 2-row: show header + matchup + H2H only
                 views.setViewVisibility(R.id.widget_header_layout, android.view.View.VISIBLE)
                 views.setViewVisibility(R.id.widget_divider_top, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_info_card, android.view.View.VISIBLE)
                 views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.GONE)
                 views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.VISIBLE)
                 views.setViewVisibility(R.id.widget_standings_table, android.view.View.GONE)
@@ -692,6 +694,7 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
                 // Full 3x2+ layout — everything visible, weights handle the sizing
                 views.setViewVisibility(R.id.widget_header_layout, android.view.View.VISIBLE)
                 views.setViewVisibility(R.id.widget_divider_top, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_info_card, android.view.View.VISIBLE)
                 views.setViewVisibility(R.id.widget_stadium_pitcher_info, android.view.View.VISIBLE)
                 views.setViewVisibility(R.id.widget_standing_h2h, android.view.View.VISIBLE)
                 views.setViewVisibility(R.id.widget_standings_table, android.view.View.VISIBLE)
@@ -699,29 +702,31 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         }
 
         // ── 2. Logo visibility based on available width ───────────────────────────────────────
-        val showLogos = minWidth >= 140
+        val showLogos = minWidth >= 130
         views.setViewVisibility(R.id.widget_away_logo, if (showLogos) android.view.View.VISIBLE else android.view.View.GONE)
         views.setViewVisibility(R.id.widget_home_logo, if (showLogos) android.view.View.VISIBLE else android.view.View.GONE)
 
         // ── 3. Proportional font sizing ────────────────────────────────────────────────────────
-        // Font sizes scale from available height so they ALWAYS fill the space without overflow.
-        // Coefficients tuned so text fills each weight-allocated row comfortably.
         val h = minHeight.toFloat()
+        val w = minWidth.toFloat()
 
-        // Header row (~14% of height in weights)
-        val titleSp   = (h * 0.115f).coerceIn(8f, 16f)
-        val tagSp     = (h * 0.095f).coerceIn(7f, 13f)
+        // Width-aware boost: wide widgets (e.g. 4x2, 5x2, or foldable inner screens) have plenty of horizontal room
+        val widthBonus = if (w >= 260f && h >= 90f) ((w - 260f) * 0.015f).coerceIn(0f, 3.5f) else 0f
 
-        // Matchup row (~36% of height in weights)
-        val opponentSp  = (h * 0.115f).coerceIn(9f, 18f)
-        val countdownSp = (h * 0.175f).coerceIn(13f, 30f)
+        // Header row
+        val titleSp   = (h * 0.105f + widthBonus * 0.4f).coerceIn(8.5f, 15f)
+        val tagSp     = (h * 0.085f + widthBonus * 0.3f).coerceIn(7.5f, 12f)
 
-        // SP + H2H rows (~12% + 11% of height)
-        val pitcherSp    = (h * 0.095f).coerceIn(7f, 14f)
-        val standingH2hSp = (h * 0.085f).coerceIn(6.5f, 13f)
+        // Matchup row (hero element)
+        val opponentSp  = (h * 0.12f + widthBonus * 0.5f).coerceIn(10f, 18f)
+        val countdownSp = (h * 0.22f + widthBonus * 1.0f).coerceIn(16f, 36f)
 
-        // Standings rows (~24% of height, 2 lines split equally)
-        val teamSp = (h * 0.085f).coerceIn(6.5f, 12f)
+        // SP + H2H rows
+        val pitcherSp    = (h * 0.09f + widthBonus * 0.3f).coerceIn(8f, 14f)
+        val standingH2hSp = (h * 0.085f + widthBonus * 0.3f).coerceIn(7.5f, 13f)
+
+        // Standings rows
+        val teamSp = (h * 0.088f + widthBonus * 0.25f).coerceIn(7.5f, 13f)
 
         views.setTextViewTextSize(R.id.widget_title,  android.util.TypedValue.COMPLEX_UNIT_SP, titleSp)
         views.setTextViewTextSize(R.id.widget_tag,    android.util.TypedValue.COMPLEX_UNIT_SP, tagSp)
@@ -737,10 +742,10 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         views.setTextViewTextSize(R.id.widget_team_5,  android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
         views.setTextViewTextSize(R.id.widget_team_6,  android.util.TypedValue.COMPLEX_UNIT_SP, teamSp)
 
-        // ── 4. Proportional padding (scales with widget size) ────────────────────────────────
+        // ── 4. Proportional outer padding (scales smoothly with widget size) ──────────────────
         val density = context?.resources?.displayMetrics?.density ?: 2f
-        val padH = ((minWidth  * 0.015f).coerceIn(3f, 10f) * density).toInt()
-        val padV = ((minHeight * 0.018f).coerceIn(2f,  8f) * density).toInt()
+        val padH = ((w * 0.025f).coerceIn(6f, 12f) * density).toInt()
+        val padV = ((h * 0.035f).coerceIn(4f, 10f) * density).toInt()
         views.setViewPadding(R.id.widget_root, padH, padV, padH, padV)
     }
 
