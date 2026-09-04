@@ -47,7 +47,6 @@ fun GameDashboard(
     modifier: Modifier = Modifier
 ) {
     val games by viewModel.upcomingGames.collectAsStateWithLifecycle()
-    val countdown by viewModel.countdown.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val weatherText by viewModel.upcomingGameWeather.collectAsStateWithLifecycle()
@@ -157,8 +156,7 @@ fun GameDashboard(
                     // 1. Primary Countdown Matchup Hero Card
                     SleekCountdownHeroCard(
                         game = primaryGame,
-                        countdownText = countdown.text,
-                        isLive = countdown.isLive,
+                        countdownFlow = viewModel.countdown,
                         weatherText = weatherText,
                         isWeatherLoading = isWeatherLoading
                     )
@@ -223,7 +221,6 @@ fun SleekHeader(
                     )
                 )
             )
-            .statusBarsPadding()
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         Row(
@@ -301,6 +298,23 @@ fun SleekHeader(
             }
         }
     }
+}
+
+@Composable
+fun SleekCountdownHeroCard(
+    game: UpcomingGame,
+    countdownFlow: kotlinx.coroutines.flow.StateFlow<CountdownState>,
+    weatherText: String?,
+    isWeatherLoading: Boolean
+) {
+    val countdown by countdownFlow.collectAsStateWithLifecycle()
+    SleekCountdownHeroCard(
+        game = game,
+        countdownText = countdown.text,
+        isLive = countdown.isLive,
+        weatherText = weatherText,
+        isWeatherLoading = isWeatherLoading
+    )
 }
 
 @Composable
@@ -892,7 +906,11 @@ fun StandingsAndRaceSection(viewModel: GameViewModel) {
             }
 
             // Card 3: Playoff Spot Status
-            val isPlayoffIn = playoffStatusDisplay.contains("IN")
+            val isPlayoffIn = !playoffStatusDisplay.contains("ELIMINATED") &&
+                    !playoffStatusDisplay.contains("OUT") &&
+                    (playoffStatusDisplay == "IN" ||
+                     playoffStatusDisplay.startsWith("IN ") ||
+                     playoffStatusDisplay.contains("CLINCHED"))
             val isPlayoffLoading = playoffStatusDisplay.contains("---")
             val statusColor = if (isPlayoffLoading) Color.White.copy(alpha = 0.5f) else if (isPlayoffIn) Color(0xFF4CAF50) else Color(0xFFF44336)
 
@@ -937,10 +955,10 @@ fun LastGameResultCard(result: LastGameResult) {
     val isHome = result.isHomeGame
     val awayName = if (isHome) result.opponentName else "Detroit Tigers"
     val homeName = if (isHome) "Detroit Tigers" else result.opponentName
-    val awayAbbr = getTeamAbbreviation(awayName)
-    val homeAbbr = getTeamAbbreviation(homeName)
-    val awayLogo = getTeamLogoUrl(awayName)
-    val homeLogo = getTeamLogoUrl(homeName)
+    val awayAbbr = remember(awayName) { getTeamAbbreviation(awayName) }
+    val homeAbbr = remember(homeName) { getTeamAbbreviation(homeName) }
+    val awayLogo = remember(awayName) { getTeamLogoUrl(awayName) }
+    val homeLogo = remember(homeName) { getTeamLogoUrl(homeName) }
     val awayScore = if (isHome) result.opponentScore else result.tigersScore
     val homeScore = if (isHome) result.tigersScore else result.opponentScore
 

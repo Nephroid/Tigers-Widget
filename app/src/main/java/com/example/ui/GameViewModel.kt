@@ -145,7 +145,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _groundedStandings.value = text
                 _groundedSources.value = sources
 
-                if (text != null) {
+                if (text.isNotBlank()) {
                     var gamesBackDiv = "N/A"
                     var gamesBackWC = "N/A"
                     var playoffStatus = "UNKNOWN"
@@ -216,6 +216,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _playoffStatus.value = prefs.getString("playoff_status", "UNKNOWN") ?: "UNKNOWN"
                 _lastGameResult.value = loadSavedLastGame()
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 Log.e("GameViewModel", "Error refreshing data: ${e.message}")
                 _errorMessage.value = "Failed to update live scores. Showing offline/simulated data."
                 // Attempt fallback refresh

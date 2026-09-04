@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.example.data.model.UpcomingGame
 import kotlinx.coroutines.flow.Flow
 
@@ -17,4 +18,10 @@ interface GameDao {
 
     @Query("DELETE FROM upcoming_games")
     suspend fun clearGames()
+
+    @Transaction
+    suspend fun replaceGames(games: List<UpcomingGame>) {
+        clearGames()
+        insertGames(games)
+    }
 }

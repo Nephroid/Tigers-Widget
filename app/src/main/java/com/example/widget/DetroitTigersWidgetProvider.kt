@@ -13,6 +13,7 @@ import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import coil.ImageLoader
+import coil.imageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.example.MainActivity
@@ -262,8 +263,10 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
                         pendingResult.finish()
                     }
                 }
+                scheduleNextUpdate(context)
+            } else {
+                cancelUpdate(context)
             }
-            scheduleNextUpdate(context)
         }
     }
 
@@ -282,10 +285,13 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
             // Proactively refresh game data if stale (> 15 minutes)
             if (now - lastRefresh > 15 * 60 * 1000L) {
                 try {
-                    val repository = com.example.data.repository.GameRepository(db.gameDao())
-                    repository.refreshGames(context, forceSimulated = false)
-                    prefs.edit().putLong("last_widget_refresh_ts", now).apply()
+                    kotlinx.coroutines.withTimeoutOrNull(6000L) {
+                        val repository = com.example.data.repository.GameRepository(db.gameDao())
+                        repository.refreshGames(context, forceSimulated = false)
+                        prefs.edit().putLong("last_widget_refresh_ts", now).apply()
+                    }
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     Log.e("TigersWidget", "Error refreshing games repository in widget: ${e.message}")
                 }
             }
@@ -301,8 +307,8 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
                 
                 // Query current widget options for responsive sizing
                 val options = overrideOptions ?: appWidgetManager.getAppWidgetOptions(widgetId)
-                val minWidth = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) ?: 180
-                val minHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) ?: 110
+                val minWidth = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 180)?.takeIf { it > 0 } ?: 180
+                val minHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110)?.takeIf { it > 0 } ?: 110
 
                 // Theme toggle click intent
                 val toggleIntent = Intent(context, DetroitTigersWidgetProvider::class.java).apply {
@@ -592,9 +598,13 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         val playoffStatusRaw = prefs.getString("playoff_status", "OUT") ?: "OUT"
         val playoffSpotInfo = prefs.getString("playoff_spot_info", null)
 
-        val isPlayoffIn = playoffStatusRaw.contains("IN", ignoreCase = true) ||
-                wcGbRaw.contains("IN", ignoreCase = true) ||
-                (sortedList.indexOfFirst { it.name.contains("DET", ignoreCase = true) } == 0)
+        val isPlayoffIn = (!playoffStatusRaw.contains("ELIMINATED", ignoreCase = true) &&
+                !playoffStatusRaw.contains("OUT", ignoreCase = true) &&
+                (playoffStatusRaw.equals("IN", ignoreCase = true) ||
+                 playoffStatusRaw.startsWith("IN ", ignoreCase = true) ||
+                 playoffStatusRaw.contains("CLINCHED", ignoreCase = true) ||
+                 wcGbRaw.startsWith("IN", ignoreCase = true) ||
+                 (sortedList.indexOfFirst { it.name.contains("DET", ignoreCase = true) } == 0)))
 
         val formattedWcText = when {
             isPlayoffIn -> {
@@ -736,14 +746,14 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
 
     private suspend fun loadLogoBitmap(context: Context, url: String): Bitmap? {
         return try {
-            val loader = ImageLoader(context)
             val request = ImageRequest.Builder(context)
                 .data(url)
                 .allowHardware(false) // essential for widgets so bitmap can be passed across processes
                 .build()
-            val result = loader.execute(request)
+            val result = context.imageLoader.execute(request)
             if (result is SuccessResult) {
                 val rawBitmap = result.drawable.toBitmap()
+                if (rawBitmap.width <= 0 || rawBitmap.height <= 0) return null
                 // Resize to max 120x120 to avoid TransactionTooLargeException in RemoteViews
                 val maxDim = 120
                 if (rawBitmap.width > maxDim || rawBitmap.height > maxDim) {
@@ -790,21 +800,11 @@ class DetroitTigersWidgetProvider : AppWidgetProvider() {
         val intervalMs = 15 * 60 * 1000L // 15-minute battery-friendly periodic refresh
         val triggerAt = android.os.SystemClock.elapsedRealtime() + intervalMs
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // Ensure alarm triggers even in Doze mode without requiring exact alarm permissions
-                alarmManager.setAndAllowWhileIdle(
-                    android.app.AlarmManager.ELAPSED_REALTIME,
-                    triggerAt,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.setInexactRepeating(
-                    android.app.AlarmManager.ELAPSED_REALTIME,
-                    triggerAt,
-                    intervalMs,
-                    pendingIntent
-                )
-            }
+            alarmManager.set(
+                android.app.AlarmManager.ELAPSED_REALTIME,
+                triggerAt,
+                pendingIntent
+            )
         } catch (e: Exception) {
             Log.e("TigersWidget", "Error scheduling auto refresh alarm: ${e.message}")
         }

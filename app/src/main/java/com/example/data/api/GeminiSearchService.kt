@@ -174,14 +174,14 @@ object GeminiSearchClient {
     suspend fun getVenueWeather(stadiumName: String): String {
         val now = System.currentTimeMillis()
         val cached = weatherCache[stadiumName]
-        if (cached != null && (now - cached.second) < 30 * 60 * 1000L) {
+        if (cached != null && now < cached.second) {
             return cached.first
         }
 
         val apiKey = getApiKey()
         if (apiKey.isEmpty() || apiKey == "MY_GEMINI_API_KEY" || apiKey == "MY_GOOGLE_API_KEY") {
             val defaultWeather = getDefaultWeatherForStadium(stadiumName)
-            weatherCache[stadiumName] = Pair(defaultWeather, now)
+            weatherCache[stadiumName] = Pair(defaultWeather, now + 30 * 60 * 1000L)
             return defaultWeather
         }
 
@@ -210,7 +210,7 @@ object GeminiSearchClient {
             } else {
                 cleaned
             }
-            weatherCache[stadiumName] = Pair(finalWeather, now)
+            weatherCache[stadiumName] = Pair(finalWeather, now + 30 * 60 * 1000L)
             finalWeather
         } catch (e: retrofit2.HttpException) {
             Log.w("GeminiSearchClient", "HTTP ${e.code()} fetching weather for $stadiumName (using fallback)")
@@ -218,6 +218,7 @@ object GeminiSearchClient {
             weatherCache[stadiumName] = Pair(fallback, now + 15 * 60 * 1000L) // Cache fallback for 15 mins during 429
             fallback
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Log.w("GeminiSearchClient", "Error fetching weather for $stadiumName: ${e.message}")
             val fallback = cached?.first ?: getDefaultWeatherForStadium(stadiumName)
             weatherCache[stadiumName] = Pair(fallback, now + 15 * 60 * 1000L)

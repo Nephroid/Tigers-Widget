@@ -1,5 +1,7 @@
 package com.example.data.model
 
+private val WHITESPACE_REGEX = Regex("\\s+")
+
 fun getTeamLogoUrl(teamName: String, teamId: Int? = null): String {
     if (teamId != null && teamId > 0) {
         val codeById = when (teamId) {
@@ -41,7 +43,7 @@ fun getTeamLogoUrl(teamName: String, teamId: Int? = null): String {
     }
 
     val upper = teamName.uppercase().trim()
-    val words = upper.replace(".", " ").split(Regex("\\s+")).toSet()
+    val words = upper.replace(".", " ").split(WHITESPACE_REGEX).toSet()
     val code = when {
         upper.contains("DODGER") || upper.contains("LA DODGER") || upper.contains("LOS ANGELES DODGER") || "LAD" in words -> "lad"
         upper.contains("ANGEL") || upper.contains("LA ANGEL") || upper.contains("LOS ANGELES ANGEL") || upper.contains("ANAHEIM") || "LAA" in words -> "laa"

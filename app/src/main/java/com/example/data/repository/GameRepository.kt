@@ -108,6 +108,10 @@ class GameRepository(private val gameDao: GameDao) {
                     generateAndSaveSimulatedGames(context)
                 } else {
                     val finalGamesList = mutableListOf<UpcomingGame>()
+                    val gameYear = upcomingMlbGames.firstOrNull()?.gameDate?.take(4) ?: currentYear
+                    val standing = fetchTigersStanding(context, gameYear)
+                    val h2hCache = mutableMapOf<Int, String>()
+
                     upcomingMlbGames.forEachIndexed { index, mlbGame ->
                         val isHome = mlbGame.teams?.home?.team?.id == 116
                         val opponentTeam = if (isHome) mlbGame.teams?.away else mlbGame.teams?.home
@@ -151,6 +155,7 @@ class GameRepository(private val gameDao: GameDao) {
                                     whip = wh
                                 }
                             } catch (e: Exception) {
+                                if (e is kotlinx.coroutines.CancellationException) throw e
                                 Log.e("GameRepository", "Error fetching stats for pitcher ${pitcherInfo.fullName}: ${e.message}")
                                 val (w, l, e, so, wh) = getRealisticStarterStats(finalPitcherName)
                                 wins = w
@@ -192,10 +197,14 @@ class GameRepository(private val gameDao: GameDao) {
                         }
                         val winProbability = getWinProbability(finalPitcherName, isHome)
                         val pitcherAge = getPitcherAge(finalPitcherName)
-                        val gameYear = mlbGame.gameDate?.take(4) ?: currentYear
-                        val standing = fetchTigersStanding(context, gameYear)
                         val opponentId = opponentTeam?.team?.id
-                        val h2h = fetchHeadToHeadRecord(opponentId, opponentName, gameYear)
+                        val h2h = if (opponentId != null) {
+                            h2hCache.getOrPut(opponentId) {
+                                fetchHeadToHeadRecord(opponentId, opponentName, gameYear)
+                            }
+                        } else {
+                            fetchHeadToHeadRecord(null, opponentName, gameYear)
+                        }
                         val pHand = getPitcherHand(finalPitcherName, pitcherInfo?.pitchHand?.code)
 
                         finalGamesList.add(
@@ -226,11 +235,11 @@ class GameRepository(private val gameDao: GameDao) {
                         )
                     }
 
-                    gameDao.clearGames()
-                    gameDao.insertGames(finalGamesList)
+                    gameDao.replaceGames(finalGamesList)
                     Log.d("GameRepository", "Successfully updated local cache with ${finalGamesList.size} live games.")
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 Log.e("GameRepository", "Error refreshing live schedule: ${e.message}", e)
                 generateAndSaveSimulatedGames(context)
             }
@@ -725,8 +734,7 @@ class GameRepository(private val gameDao: GameDao) {
             )
         )
 
-        gameDao.clearGames()
-        gameDao.insertGames(simulatedList)
+        gameDao.replaceGames(simulatedList)
         Log.d("GameRepository", "Updated cache with ${simulatedList.size} simulated upcoming matches.")
 
         val prefs = context.getSharedPreferences("TigersWidgetPrefs", Context.MODE_PRIVATE)
@@ -882,21 +890,23 @@ class GameRepository(private val gameDao: GameDao) {
         }
     }
 
-    suspend fun fetchTigersRoster(): List<MlbRosterEntry> {
-        return try {
+    suspend fun fetchTigersRoster(): List<MlbRosterEntry> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
             val response = apiService.getRoster(teamId = 116, rosterType = "40Man")
             response.roster?.filter { it.person != null }?.ifEmpty { getFallbackRoster() } ?: getFallbackRoster()
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Log.w("GameRepository", "Error fetching live roster: ${e.message}")
             getFallbackRoster()
         }
     }
 
-    suspend fun fetchRecentTransactions(): List<MlbTransactionItem> {
-        return try {
+    suspend fun fetchRecentTransactions(): List<MlbTransactionItem> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
             val response = apiService.getTransactions(teamId = 116, startDate = "2024-01-01")
             response.transactions?.sortedByDescending { it.date ?: "" }?.take(15)?.ifEmpty { getFallbackTransactions() } ?: getFallbackTransactions()
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Log.w("GameRepository", "Error fetching live transactions: ${e.message}")
             getFallbackTransactions()
         }
