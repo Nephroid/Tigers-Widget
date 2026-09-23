@@ -6,6 +6,8 @@ import android.util.Log
 import com.example.data.api.*
 import com.example.data.local.GameDao
 import com.example.data.model.UpcomingGame
+import com.example.data.model.getTeamAbbrById
+import com.example.data.model.getTeamAbbreviation as modelAbbreviation
 import com.example.widget.DetroitTigersWidgetProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -260,44 +262,8 @@ class GameRepository(private val gameDao: GameDao) {
     )
 
     private fun getTeamAbbr(teamId: Int?, teamName: String?): String {
-        return when (teamId) {
-            116 -> "DET"
-            114 -> "CLE"
-            142 -> "MIN"
-            118 -> "KC"
-            145 -> "CWS"
-            110 -> "BAL"
-            111 -> "BOS"
-            147 -> "NYY"
-            139 -> "TB"
-            141 -> "TOR"
-            117 -> "HOU"
-            108 -> "LAA"
-            133 -> "OAK"
-            136 -> "SEA"
-            140 -> "TEX"
-            else -> {
-                val name = teamName?.lowercase() ?: ""
-                when {
-                    name.contains("cleveland") || name.contains("guardians") -> "CLE"
-                    name.contains("minnesota") || name.contains("twins") -> "MIN"
-                    name.contains("kansas") || name.contains("royals") -> "KC"
-                    name.contains("detroit") || name.contains("tigers") -> "DET"
-                    name.contains("chicago") || name.contains("white sox") -> "CWS"
-                    name.contains("yankees") -> "NYY"
-                    name.contains("red sox") -> "BOS"
-                    name.contains("orioles") -> "BAL"
-                    name.contains("rays") -> "TB"
-                    name.contains("blue jays") -> "TOR"
-                    name.contains("astros") -> "HOU"
-                    name.contains("mariners") -> "SEA"
-                    name.contains("rangers") -> "TEX"
-                    name.contains("athletics") || name.contains("oakland") -> "OAK"
-                    name.contains("angels") -> "LAA"
-                    else -> teamName?.take(3)?.uppercase() ?: "UNK"
-                }
-            }
-        }
+        return getTeamAbbrById(teamId)
+            ?: if (teamName.isNullOrBlank()) "UNK" else modelAbbreviation(teamName)
     }
 
     private fun saveFallbackLastGame(prefs: SharedPreferences) {
@@ -553,25 +519,7 @@ class GameRepository(private val gameDao: GameDao) {
     }
 
     private fun getTeamAbbreviation(opponentName: String): String {
-        val name = opponentName.lowercase()
-        return when {
-            name.contains("dodgers") || name.contains("lad") || name.contains("la dodgers") -> "LAD"
-            name.contains("guardians") || name.contains("cleveland") -> "CLE"
-            name.contains("twins") || name.contains("minnesota") -> "MIN"
-            name.contains("white sox") || name.contains("chicago white sox") -> "CWS"
-            name.contains("royals") || name.contains("kansas city") -> "KC"
-            name.contains("yankees") || name.contains("new york yankees") -> "NYY"
-            name.contains("red sox") || name.contains("boston") -> "BOS"
-            name.contains("astros") || name.contains("houston") -> "HOU"
-            name.contains("mariners") || name.contains("seattle") -> "SEA"
-            name.contains("rangers") || name.contains("texas") -> "TEX"
-            name.contains("athletics") || name.contains("oakland") -> "OAK"
-            name.contains("angels") || name.contains("los angeles angels") -> "LAA"
-            name.contains("blue jays") || name.contains("toronto") -> "TOR"
-            name.contains("orioles") || name.contains("baltimore") -> "BAL"
-            name.contains("rays") || name.contains("tampa bay") -> "TB"
-            else -> opponentName.take(3).uppercase()
-        }
+        return modelAbbreviation(opponentName)
     }
 
     private fun getStaticHeadToHeadRecord(opponentName: String, season: String): String {
